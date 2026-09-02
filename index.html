@@ -28,122 +28,187 @@
 </head>
 <body class="min-h-screen flex flex-col justify-center items-center p-4">
 
-    <!-- HLAVNÍ AUTENTIZAČNÍ BOX -->
+    <!-- HLAVNÍ PŘIHLAŠOVACÍ PANEL -->
     <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
         <header class="text-center space-y-1.5">
             <h1 class="text-2xl font-bold text-gold tracking-tight">🥖 Pekařství Ludvík &amp; Mistrík</h1>
-            <p class="text-sm font-semibold text-white">Centrální systém řízení středisek</p>
-            <p class="text-xs text-neutral-400 font-normal">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice • Vedení</p>
+            <p class="text-sm font-semibold text-white">Centrální systém řízení</p>
+            <p class="text-xs text-neutral-400 font-normal" id="header-subtitle">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice</p>
+            
+            <!-- Odznak autorizovaného zařízení -->
+            <div id="device-badge" class="pt-1"></div>
         </header>
 
-        <!-- Přepínač metod přihlášení -->
+        <!-- Přepínač metod -->
         <div class="flex border-b border-neutral-800">
-            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition">
-                Ranní přihlášení (Heslo)
+            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition">
+                Rychlý PIN / RFID
             </button>
-            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition">
-                Rychlý PIN / RFID čip
+            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition">
+                Správa (Heslo)
             </button>
         </div>
 
-        <!-- Chybové hlášení -->
+        <!-- Chybová hláška -->
         <div id="auth-error" class="hidden p-3 bg-red-950/80 border border-red-800 rounded-lg text-red-200 text-xs text-center font-medium"></div>
 
-        <!-- Indikátor stavu RFID čtečky -->
-        <div id="rfid-status" class="hidden p-2 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center space-x-2">
-            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-[11px] text-neutral-300 font-medium">RFID čtečka aktivní – přiložte čip</span>
+        <!-- 1. BLOK PRO NEAUTORIZOVANÁ ZAŘÍZENÍ -->
+        <div id="device-unauthorized-box" class="hidden p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 text-center">
+            <div class="text-amber-400 text-2xl">🔒</div>
+            <h3 class="text-sm font-bold text-white">Zařízení není ověřeno</h3>
+            <p class="text-xs text-neutral-400">PIN a RFID lze používat pouze na terminálech autorizovaných vedením společnosti.</p>
+            
+            <div class="space-y-2 pt-2">
+                <input type="password" id="input-activation-key" placeholder="Zadejte aktivační kód vedení"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-2.5 text-xs text-center text-white focus:outline-none focus:border-gold">
+                <button type="button" onclick="aktivovatZarizeni()" class="w-full bg-neutral-800 hover:bg-gold hover:text-black text-white font-bold py-2 rounded-lg text-xs transition">
+                    Aktivovat tento terminál
+                </button>
+            </div>
         </div>
 
-        <!-- Formulář 1: Plné ranní přihlášení (Email + Heslo) -->
-        <form id="form-full" class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
-                <input type="email" id="input-email" required placeholder="jmeno@pekarstvi.cz"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
+        <!-- 2. BLOK PRO RYCHLÝ PIN / RFID (Pouze na autorizovaném zařízení) -->
+        <div id="form-pin" class="space-y-4">
+            <!-- Indikátor čtečky -->
+            <div class="p-2 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center space-x-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[11px] text-neutral-300 font-medium">RFID čtečka terminálu připravena</span>
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Heslo</label>
-                <input type="password" id="input-password" required placeholder="••••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
-            </div>
-
-            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
-                Zahájit denní směnu
-            </button>
-        </form>
-
-        <!-- Formulář 2: Rychlý PIN nebo RFID -->
-        <div id="form-pin" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider text-center mb-1.5">Zadejte PIN nebo přiložte RFID čip</label>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider text-center mb-1.5">Zadejte 6místný PIN nebo přiložte čip</label>
                 <input type="password" id="input-pin" readonly maxlength="6" placeholder="••••••"
                     class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.6em] text-2xl text-gold font-bold focus:outline-none focus:border-gold transition">
-                <p class="text-[11px] text-neutral-400 mt-1.5 text-center">Vyžaduje předchozí ranní přihlášení heslem.</p>
+                <p class="text-[11px] text-neutral-400 mt-1 text-center">Vyžaduje ranní aktivaci heslem na tomto terminálu.</p>
             </div>
 
-            <!-- Numerická klávesnice -->
-            <div class="grid grid-cols-3 gap-2 pt-2">
+            <!-- Dotyková klávesnice -->
+            <div class="grid grid-cols-3 gap-2 pt-1">
                 <button type="button" onclick="stiskCisla('1')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">1</button>
                 <button type="button" onclick="stiskCisla('2')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">2</button>
                 <button type="button" onclick="stiskCisla('3')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">3</button>
-                
                 <button type="button" onclick="stiskCisla('4')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">4</button>
                 <button type="button" onclick="stiskCisla('5')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">5</button>
                 <button type="button" onclick="stiskCisla('6')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">6</button>
-                
                 <button type="button" onclick="stiskCisla('7')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">7</button>
                 <button type="button" onclick="stiskCisla('8')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">8</button>
                 <button type="button" onclick="stiskCisla('9')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">9</button>
-                
                 <button type="button" onclick="smazatPin()" class="bg-neutral-900 hover:bg-red-950/60 text-red-400 font-bold py-3 rounded-lg text-lg border border-neutral-800 transition">⌫</button>
                 <button type="button" onclick="stiskCisla('0')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">0</button>
                 <button type="button" onclick="overitPin()" class="bg-gold hover:bg-yellow-500 text-black font-extrabold py-3 rounded-lg text-sm transition">OK</button>
             </div>
         </div>
 
+        <!-- 3. BLOK PRO EMAIL A HESLO (Funguje kdekoliv) -->
+        <form id="form-full" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
+                <input type="email" id="input-email" required placeholder="jmeno@pekarstvi.cz"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Heslo</label>
+                <input type="password" id="input-password" required placeholder="••••••••"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
+            </div>
+            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
+                Přihlásit do systému
+            </button>
+        </form>
+
         <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-4">
-            Test: <span class="text-neutral-400 font-mono">vedouci@pekarstvi.cz</span> (heslo: <span class="text-neutral-400 font-mono">kralupy123</span> | PIN: <span class="text-neutral-400 font-mono">987654</span> | RFID čip UID: <span class="text-neutral-400 font-mono">RFID001</span>)
+            Klíč k aktivaci zařízení pro test: <span class="text-neutral-300 font-mono">KRALUPY-TERM-01</span>
         </div>
     </div>
 
-    <!-- ZABEZPEČENÝ DASHBOARD -->
-    <div id="app-dashboard" class="hidden w-full max-w-5xl space-y-6">
-        <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-xl flex justify-between items-center">
+    <!-- 4. ZABEZPEČENÝ DASHBOARD & DOCHÁZKA -->
+    <div id="app-dashboard" class="hidden w-full max-w-4xl space-y-6">
+        <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4">
             <div>
-                <h2 class="text-xl font-bold text-gold tracking-tight" id="dash-user-name">Zaměstnanec</h2>
-                <p class="text-sm font-medium text-white" id="dash-user-role">Role a středisko</p>
-                <span id="dash-auth-type" class="inline-block mt-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800"></span>
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-xl font-bold text-gold" id="dash-user-name">Zaměstnanec</h2>
+                    <span id="dash-auth-badge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800"></span>
+                </div>
+                <p class="text-xs text-neutral-400 mt-0.5" id="dash-user-role">Role a středisko</p>
             </div>
-            <button onclick="odhlasit()" class="bg-black hover:bg-neutral-900 border border-neutral-800 hover:border-red-700 text-white hover:text-red-400 px-4 py-2 rounded-lg text-xs font-semibold transition">
-                Uzamknout / Odhlásit
-            </button>
+            <div class="flex items-center space-x-3">
+                <span id="auto-lock-counter" class="text-xs text-neutral-500 font-mono hidden">Uzamčení za: <b id="lock-sec" class="text-gold">5</b>s</span>
+                <button onclick="odhlasit()" class="bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 hover:border-red-800 text-neutral-200 hover:text-red-400 px-4 py-2 rounded-lg text-xs font-semibold transition">
+                    Uzamknout
+                </button>
+            </div>
         </header>
 
-        <section class="space-y-2.5">
-            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Povolená střediska</h3>
-            <div id="strediska-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
-        </section>
+        <!-- Modul: Evidence docházky -->
+        <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
+            <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>⏱️</span> Evidence docházky
+                    </h3>
+                    <p class="text-xs text-neutral-400 mt-0.5" id="dash-location-label">Zaznamenává se na tomto terminálu.</p>
+                </div>
+                <span id="current-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-900 text-neutral-400 border border-neutral-800">
+                    Mimo směnu
+                </span>
+            </div>
 
-        <section class="space-y-2.5">
-            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Dostupné moduly</h3>
-            <div id="moduly-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
-        </section>
+            <!-- Tlačítka docházky -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <button id="btn-prichod" onclick="zapsatDochazku('prichod')" class="p-4 bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800 text-emerald-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
+                    <span class="text-xl">🟢</span> Příchod
+                </button>
+                <button id="btn-pauza-start" onclick="zapsatDochazku('pauza_start')" class="p-4 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800 text-amber-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
+                    <span class="text-xl">☕</span> Na pauzu
+                </button>
+                <button id="btn-pauza-end" onclick="zapsatDochazku('pauza_end')" class="p-4 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-800 text-blue-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
+                    <span class="text-xl">↩️</span> Z pauzy
+                </button>
+                <button id="btn-odchod" onclick="zapsatDochazku('odchod')" class="p-4 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
+                    <span class="text-xl">🔴</span> Odchod
+                </button>
+            </div>
+
+            <!-- Dnešní průchody -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Dnešní průchody</h4>
+                <div class="border border-neutral-800 rounded-xl overflow-hidden">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-neutral-900/60 text-neutral-400 border-b border-neutral-800">
+                            <tr>
+                                <th class="p-3">Čas</th>
+                                <th class="p-3">Událost</th>
+                                <th class="p-3">Terminál / Středisko</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dochazka-history-body" class="divide-y divide-neutral-900 text-white">
+                            <tr>
+                                <td colspan="3" class="p-4 text-center text-neutral-500">Zatím žádné záznamy pro dnešní den.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // DATABÁZE UŽIVATELŮ: UNIKÁTNÍ PIN A RFID UID
+        // SEZNAM AUTORIZOVANÝCH AKTIVAČNÍCH KÓDŮ ZAŘÍZENÍ OD VEDENÍ
+        const POVOLENE_TERMINALY = {
+            "KRALUPY-TERM-01": { strediskoId: "pekarna-kralupy", nazev: "Terminál Pekárna Kralupy" },
+            "LIBCICE-KNEDLIK-01": { strediskoId: "knedlikarna-libcice", nazev: "Terminál Knedlíkárna Libčice" },
+            "LIBCICE-BISTRO-01": { strediskoId: "bistro-libcice", nazev: "Terminál Bistro Libčice" }
+        };
+
+        // DATABÁZE UŽIVATELŮ: UNIKÁTNÍ PIN A RFID
         const UZIVATELE = [
             {
                 email: "vedouci@pekarstvi.cz",
                 heslo: "kralupy123",
                 pin: "987654",
-                rfidUid: "RFID001", // UID čipu nebo karty
+                rfidUid: "RFID001",
                 jmeno: "Karel Vedoucí",
-                role: "Vedoucí výroby Kralupy",
-                strediska: ["pekarna-kralupy", "bistro-libcice"],
-                moduly: ["dochazka", "prevodky", "vyroba"]
+                role: "Vedoucí výroby Kralupy"
             },
             {
                 email: "vedeni@pekarstvi.cz",
@@ -151,9 +216,7 @@
                 pin: "112233",
                 rfidUid: "RFID002",
                 jmeno: "Centrální Vedení",
-                role: "Vedení společnosti",
-                strediska: ["pekarna-kralupy", "knedlikarna-libcice", "bistro-libcice", "vedeni-spolecnosti"],
-                moduly: ["dochazka", "prevodky", "vyroba", "audit", "zamestnanci"]
+                role: "Vedení společnosti"
             },
             {
                 email: "pekar@pekarstvi.cz",
@@ -161,89 +224,113 @@
                 pin: "554433",
                 rfidUid: "RFID003",
                 jmeno: "Jan Pekař",
-                role: "Pekař Kralupy",
-                strediska: ["pekarna-kralupy"],
-                moduly: ["dochazka", "vyroba"]
+                role: "Pekař Kralupy"
             }
         ];
 
-        const SEZNAM_STREDISEK = {
-            "pekarna-kralupy": { nazev: "Pekárna Kralupy", popis: "Výrobna pečiva, lahůdky, cukrárna" },
-            "knedlikarna-libcice": { nazev: "Knedlíkárna Libčice", popis: "Výroba a expedice knedlíků" },
-            "bistro-libcice": { nazev: "Bistro Libčice", popis: "Gastro provoz a prodej" },
-            "vedeni-spolecnosti": { nazev: "Vedení společnosti", popis: "Centrální management a finance" }
-        };
-
-        const SEZNAM_MODULU = {
-            dochazka: "⏱️ Evidence docházky",
-            prevodky: "🔄 Interní převodky",
-            vyroba: "📋 Výrobní receptury",
-            audit: "🛡️ Bezpečnostní audit",
-            zamestnanci: "👥 Správa zaměstnanců"
-        };
+        let aktivniUzivatel = null;
+        let rfidBuffer = "";
+        let casPosledniKlavesy = 0;
+        let odpocetTimer = null;
 
         const authPanel = document.getElementById("auth-panel");
         const dashboard = document.getElementById("app-dashboard");
         const authError = document.getElementById("auth-error");
-        const rfidStatus = document.getElementById("rfid-status");
         const pinInput = document.getElementById("input-pin");
 
-        let rfidBuffer = "";
-        let posledniCasKlavesy = 0;
-
-        function dnesniDatumKlic() {
+        function dnesniKlic() {
             return new Date().toISOString().slice(0, 10);
+        }
+
+        // KONTROLA AUTORIZACE ZAŘÍZENÍ PŘI NAČTENÍ
+        function ziskatAktivniTerminal() {
+            const token = localStorage.getItem("pekarstvi_authorized_terminal");
+            return token ? JSON.parse(token) : null;
+        }
+
+        function aktualizovatStavZarizeniUI() {
+            const terminal = ziskatAktivniTerminal();
+            const badge = document.getElementById("device-badge");
+            const pinForm = document.getElementById("form-pin");
+            const unauthBox = document.getElementById("device-unauthorized-box");
+
+            if (terminal) {
+                badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full font-medium">✓ ${terminal.nazev}</span>`;
+                pinForm.classList.remove("hidden");
+                unauthBox.classList.add("hidden");
+            } else {
+                badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] text-neutral-400 bg-neutral-900 border border-neutral-800 px-2.5 py-0.5 rounded-full font-medium">Neautorizované zařízení</span>`;
+                pinForm.classList.add("hidden");
+                unauthBox.classList.remove("hidden");
+            }
+        }
+
+        function aktivovatZarizeni() {
+            const kod = document.getElementById("input-activation-key").value.trim().toUpperCase();
+            if (POVOLENE_TERMINALY[kod]) {
+                localStorage.setItem("pekarstvi_authorized_terminal", JSON.stringify(POVOLENE_TERMINALY[kod]));
+                authError.classList.add("hidden");
+                aktualizovatStavZarizeniUI();
+            } else {
+                authError.textContent = "Neplatný aktivační kód. Kontaktujte vedení.";
+                authError.classList.remove("hidden");
+            }
         }
 
         function zmenitRezim(rezim) {
             authError.classList.add("hidden");
             smazatPin();
-            const tabFull = document.getElementById("tab-full");
             const tabPin = document.getElementById("tab-pin");
+            const tabFull = document.getElementById("tab-full");
+            const formPinWrap = document.getElementById("form-pin");
             const formFull = document.getElementById("form-full");
-            const formPin = document.getElementById("form-pin");
+            const unauthBox = document.getElementById("device-unauthorized-box");
+            const isAuthorized = !!ziskatAktivniTerminal();
 
-            if (rezim === "full") {
+            if (rezim === "pin") {
+                tabPin.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
+                tabFull.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
+                formFull.classList.add("hidden");
+                if (isAuthorized) {
+                    formPinWrap.classList.remove("hidden");
+                    unauthBox.classList.add("hidden");
+                } else {
+                    formPinWrap.classList.add("hidden");
+                    unauthBox.classList.remove("hidden");
+                }
+            } else {
                 tabFull.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
                 tabPin.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
                 formFull.classList.remove("hidden");
-                formPin.classList.add("hidden");
-                rfidStatus.classList.add("hidden");
-            } else {
-                tabPin.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
-                tabFull.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
-                formPin.classList.remove("hidden");
-                formFull.classList.add("hidden");
-                rfidStatus.classList.remove("hidden");
+                formPinWrap.classList.add("hidden");
+                unauthBox.classList.add("hidden");
             }
         }
 
-        // 1. RANNÍ PŘIHLÁŠENÍ (EMAIL + HESLO)
+        // PŘIHLÁŠENÍ HESLEM (Provede i ranní aktivaci na tomto zařízení)
         document.getElementById("form-full").addEventListener("submit", (e) => {
             e.preventDefault();
             const email = document.getElementById("input-email").value.trim().toLowerCase();
             const heslo = document.getElementById("input-password").value;
+            const u = UZIVATELE.find(x => x.email === email && x.heslo === heslo);
 
-            const uzivatel = UZIVATELE.find(u => u.email === email && u.heslo === heslo);
-
-            if (!uzivatel) {
+            if (!u) {
                 authError.textContent = "Chybný email nebo heslo.";
                 authError.classList.remove("hidden");
                 return;
             }
 
-            localStorage.setItem("session_pw_ok_" + uzivatel.email, dnesniDatumKlic());
-            spustitAplikaci(uzivatel, "Ranní ověření heslem (Denní relace aktivní)");
+            localStorage.setItem("session_pw_ok_" + u.email, dnesniKlic());
+            spustitAplikaci(u, "Ověření heslem");
         });
 
-        // 2. KLÁVESNICE PRO PIN
-        function stiskCisla(cislice) {
+        // KLÁVESNICE PRO PIN
+        function stiskCisla(c) {
+            if (!ziskatAktivniTerminal()) return;
             if (pinInput.value.length < 6) {
-                pinInput.value += cislice;
+                pinInput.value += c;
                 authError.classList.add("hidden");
-                if (pinInput.value.length === 6) {
-                    overitPin();
-                }
+                if (pinInput.value.length === 6) overitPin();
             }
         }
 
@@ -253,43 +340,44 @@
         }
 
         function overitPin() {
-            const pin = pinInput.value.trim();
-            if (pin.length !== 6) {
-                authError.textContent = "PIN musí mít přesně 6 číslic.";
+            if (!ziskatAktivniTerminal()) {
+                authError.textContent = "Na tomto zařízení není povolen PIN terminál.";
                 authError.classList.remove("hidden");
                 return;
             }
+            const pin = pinInput.value.trim();
+            if (pin.length !== 6) return;
 
-            const uzivatel = UZIVATELE.find(u => u.pin === pin);
-            if (!uzivatel) {
-                authError.textContent = "Neznámý PIN. Zkontrolujte zadání.";
+            const u = UZIVATELE.find(x => x.pin === pin);
+            if (!u) {
+                authError.textContent = "Neznámý PIN.";
                 authError.classList.remove("hidden");
                 pinInput.value = "";
                 return;
             }
-
-            validovatADonastavit(uzivatel, "Rychlé odemknutí (PIN)");
+            overitRelaci(u, "PIN Terminál");
         }
 
-        // 3. OBSLUHA HARDWAROVÉHO RFID ČIPU
+        // RFID OBSLUHA
         window.addEventListener("keydown", (e) => {
-            // Pokud je otevřený formulář pro heslo a uživatel zrovna píše do pole, ignorujeme RFID
-            const aktivniElement = document.activeElement;
-            if (aktivniElement && (aktivniElement.id === "input-email" || aktivniElement.id === "input-password")) {
-                return;
-            }
+            if (!ziskatAktivniTerminal()) return; // Ignorovat RFID na neschváleném zařízení
+            const el = document.activeElement;
+            if (el && (el.id === "input-email" || el.id === "input-password" || el.id === "input-activation-key")) return;
 
             const ted = Date.now();
-            // Pokud je prodleva mezi znaky delší než 100ms, jde o ruční psaní, nikoli čtečku
-            if (ted - posledniCasKlavesy > 100) {
-                rfidBuffer = "";
-            }
-            posledniCasKlavesy = ted;
+            if (ted - casPosledniKlavesy > 100) rfidBuffer = "";
+            casPosledniKlavesy = ted;
 
             if (e.key === "Enter") {
                 if (rfidBuffer.length >= 4) {
                     e.preventDefault();
-                    overitRfid(rfidBuffer);
+                    const u = UZIVATELE.find(x => x.rfidUid === rfidBuffer);
+                    if (u) {
+                        overitRelaci(u, "RFID Terminál");
+                    } else {
+                        authError.textContent = `Neznámý RFID čip (${rfidBuffer}).`;
+                        authError.classList.remove("hidden");
+                    }
                     rfidBuffer = "";
                 }
             } else if (e.key.length === 1) {
@@ -297,74 +385,158 @@
             }
         });
 
-        function overitRfid(kodCipu) {
-            const uzivatel = UZIVATELE.find(u => u.rfidUid === kodCipu);
-            if (!uzivatel) {
-                authError.textContent = `Neznámý RFID čip (${kodCipu}). Karta není přiřazena.`;
-                authError.classList.remove("hidden");
-                return;
-            }
-
-            validovatADonastavit(uzivatel, "Rychlé odemknutí (RFID čip)");
-        }
-
-        // SPOLEČNÁ KONTROLA DENNÍ RELACE PRO PIN I RFID
-        function validovatADonastavit(uzivatel, zpusob) {
-            const datumHesla = localStorage.getItem("session_pw_ok_" + uzivatel.email);
-            if (datumHesla !== dnesniDatumKlic()) {
-                authError.textContent = `Uživatel ${uzivatel.jmeno} se dnes ještě nepřihlásil heslem. Pro aktivaci rychlého přístupu se nejprve přihlaste heslem.`;
+        function overitRelaci(u, typ) {
+            const datum = localStorage.getItem("session_pw_ok_" + u.email);
+            if (datum !== dnesniKlic()) {
+                authError.textContent = `${u.jmeno} se dnes ještě nepřihlásil heslem. Přihlaste se prosím nejdříve záložkou Správa.`;
                 authError.classList.remove("hidden");
                 pinInput.value = "";
                 return;
             }
-
-            spustitAplikaci(uzivatel, zpusob);
+            spustitAplikaci(u, typ);
         }
 
-        // 4. ZOBRAZENÍ SYSTÉMU PODLE PRÁV
-        function spustitAplikaci(uzivatel, typPrihlaseni) {
+        function spustitAplikaci(u, typ) {
+            aktivniUzivatel = u;
+            const terminal = ziskatAktivniTerminal();
             authError.classList.add("hidden");
             authPanel.classList.add("hidden");
             dashboard.classList.remove("hidden");
 
-            document.getElementById("dash-user-name").textContent = uzivatel.jmeno;
-            document.getElementById("dash-user-role").textContent = `${uzivatel.role} (${uzivatel.email})`;
-            document.getElementById("dash-auth-type").textContent = typPrihlaseni;
+            document.getElementById("dash-user-name").textContent = u.jmeno;
+            document.getElementById("dash-user-role").textContent = `${u.role} (${u.email})`;
+            document.getElementById("dash-auth-badge").textContent = typ;
+            document.getElementById("dash-location-label").textContent = terminal ? `Terminál: ${terminal.nazev}` : "Centrální správa";
 
-            const strediskaContainer = document.getElementById("strediska-grid");
-            strediskaContainer.innerHTML = "";
-            uzivatel.strediska.forEach(id => {
-                const s = SEZNAM_STREDISEK[id];
-                if (s) {
-                    const card = document.createElement("div");
-                    card.className = "bg-neutral-950 border border-neutral-800 p-4 rounded-xl";
-                    card.innerHTML = `
-                        <h4 class="font-semibold text-gold text-sm">${s.nazev}</h4>
-                        <p class="text-xs text-white mt-1 font-normal">${s.popis}</p>
+            aktualizovatDochazkuUI();
+            spustitOdpocetZamknuti(30);
+        }
+
+        // EVIDENCE DOCHÁZKY
+        function nacistDochazku() {
+            const data = localStorage.getItem("dochazka_" + dnesniKlic());
+            return data ? JSON.parse(data) : [];
+        }
+
+        function ulozitDochazku(zaznamy) {
+            localStorage.setItem("dochazka_" + dnesniKlic(), JSON.stringify(zaznamy));
+        }
+
+        function ziskatStavUzivatele() {
+            const zaznamy = nacistDochazku().filter(z => z.email === aktivniUzivatel.email);
+            if (zaznamy.length === 0) return { stav: "mimo", posledni: null, zaznamy: [] };
+            const posledni = zaznamy[zaznamy.length - 1];
+            return {
+                stav: posledni.typ === "prichod" || posledni.typ === "pauza_end" ? "pracuje" : (posledni.typ === "pauza_start" ? "pauza" : "mimo"),
+                posledni: posledni,
+                zaznamy: zaznamy
+            };
+        }
+
+        function zapsatDochazku(typ) {
+            const ted = new Date();
+            const casStr = ted.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+            const terminal = ziskatAktivniTerminal();
+            const lokalita = terminal ? terminal.nazev : "Vzdálený přístup";
+
+            const novyZaznam = {
+                email: aktivniUzivatel.email,
+                jmeno: aktivniUzivatel.jmeno,
+                typ: typ,
+                cas: casStr,
+                timestamp: ted.getTime(),
+                lokalita: lokalita
+            };
+
+            const zaznamy = nacistDochazku();
+            zaznamy.push(novyZaznam);
+            ulozitDochazku(zaznamy);
+
+            aktualizovatDochazkuUI();
+            spustitOdpocetZamknuti(5); // Kiosk rychlé uzamčení za 5s
+        }
+
+        function aktualizovatDochazkuUI() {
+            const info = ziskatStavUzivatele();
+            const badge = document.getElementById("current-status-badge");
+            const btnPrichod = document.getElementById("btn-prichod");
+            const btnPauzaStart = document.getElementById("btn-pauza-start");
+            const btnPauzaEnd = document.getElementById("btn-pauza-end");
+            const btnOdchod = document.getElementById("btn-odchod");
+
+            if (info.stav === "pracuje") {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Na směně`;
+                btnPrichod.disabled = true; btnPrichod.classList.add("opacity-30", "cursor-not-allowed");
+                btnPauzaStart.disabled = false; btnPauzaStart.classList.remove("opacity-30", "cursor-not-allowed");
+                btnPauzaEnd.disabled = true; btnPauzaEnd.classList.add("opacity-30", "cursor-not-allowed");
+                btnOdchod.disabled = false; btnOdchod.classList.remove("opacity-30", "cursor-not-allowed");
+            } else if (info.stav === "pauza") {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Na pauze`;
+                btnPrichod.disabled = true; btnPrichod.classList.add("opacity-30", "cursor-not-allowed");
+                btnPauzaStart.disabled = true; btnPauzaStart.classList.add("opacity-30", "cursor-not-allowed");
+                btnPauzaEnd.disabled = false; btnPauzaEnd.classList.remove("opacity-30", "cursor-not-allowed");
+                btnOdchod.disabled = true; btnOdchod.classList.add("opacity-30", "cursor-not-allowed");
+            } else {
+                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-900 text-neutral-400 border border-neutral-800";
+                badge.innerHTML = `Mimo směnu`;
+                btnPrichod.disabled = false; btnPrichod.classList.remove("opacity-30", "cursor-not-allowed");
+                btnPauzaStart.disabled = true; btnPauzaStart.classList.add("opacity-30", "cursor-not-allowed");
+                btnPauzaEnd.disabled = true; btnPauzaEnd.classList.add("opacity-30", "cursor-not-allowed");
+                btnOdchod.disabled = true; btnOdchod.classList.add("opacity-30", "cursor-not-allowed");
+            }
+
+            const tbody = document.getElementById("dochazka-history-body");
+            tbody.innerHTML = "";
+            if (info.zaznamy.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-neutral-500">Zatím žádné záznamy pro dnešní den.</td></tr>`;
+            } else {
+                const mapNazvy = { prichod: "🟢 Příchod", pauza_start: "☕ Pauza", pauza_end: "↩️ Z pauzy", odchod: "🔴 Odchod" };
+                info.zaznamy.slice().reverse().forEach(z => {
+                    const row = document.createElement("tr");
+                    row.className = "hover:bg-neutral-900/40";
+                    row.innerHTML = `
+                        <td class="p-3 font-mono text-neutral-300">${z.cas}</td>
+                        <td class="p-3 font-medium">${mapNazvy[z.typ] || z.typ}</td>
+                        <td class="p-3 text-neutral-400 text-[11px]">${z.lokalita}</td>
                     `;
-                    strediskaContainer.appendChild(card);
-                }
-            });
+                    tbody.appendChild(row);
+                });
+            }
+        }
 
-            const modulyContainer = document.getElementById("moduly-grid");
-            modulyContainer.innerHTML = "";
-            uzivatel.moduly.forEach(klic => {
-                const nazevModulu = SEZNAM_MODULU[klic];
-                if (nazevModulu) {
-                    const card = document.createElement("div");
-                    card.className = "bg-neutral-950 border border-neutral-800 hover:border-gold/60 p-4 rounded-xl cursor-pointer transition text-xs font-semibold text-white";
-                    card.textContent = nazevModulu;
-                    modulyContainer.appendChild(card);
+        function spustitOdpocetZamknuti(sekundy) {
+            if (odpocetTimer) clearInterval(odpocetTimer);
+            const box = document.getElementById("auto-lock-counter");
+            const label = document.getElementById("lock-sec");
+            box.classList.remove("hidden");
+            let zbyva = sekundy;
+            label.textContent = zbyva;
+
+            odpocetTimer = setInterval(() => {
+                zbyva--;
+                label.textContent = zbyva;
+                if (zbyva <= 0) {
+                    clearInterval(odpocetTimer);
+                    odhlasit();
                 }
-            });
+            }, 1000);
         }
 
         function odhlasit() {
+            if (odpocetTimer) clearInterval(odpocetTimer);
+            document.getElementById("auto-lock-counter").classList.add("hidden");
             dashboard.classList.add("hidden");
             authPanel.classList.remove("hidden");
-            document.getElementById("input-password").value = "";
+            aktivniUzivatel = null;
             smazatPin();
+            document.getElementById("input-password").value = "";
+            aktualizovatStavZarizeniUI();
         }
+
+        // Inicializace při spuštění
+        aktualizovatStavZarizeniUI();
     </script>
 </body>
 </html>
