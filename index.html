@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pekařství Ludvík & Mistrík - Systém řízení</title>
-    <!-- Načtení Tailwind CSS frameworku -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Moderní Google Font Inter s plnou českou diakritikou -->
+    <!-- Moderní Google Font Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,28 +28,34 @@
 </head>
 <body class="min-h-screen flex flex-col justify-center items-center p-4">
 
-    <!-- AUTENTIZAČNÍ BOX -->
-    <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl space-y-6">
+    <!-- HLAVNÍ AUTENTIZAČNÍ BOX -->
+    <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
         <header class="text-center space-y-1.5">
             <h1 class="text-2xl font-bold text-gold tracking-tight">🥖 Pekařství Ludvík &amp; Mistrík</h1>
-            <p class="text-sm font-semibold text-white tracking-normal">Centrální systém řízení středisek</p>
+            <p class="text-sm font-semibold text-white">Centrální systém řízení středisek</p>
             <p class="text-xs text-neutral-400 font-normal">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice • Vedení</p>
         </header>
 
         <!-- Přepínač metod přihlášení -->
         <div class="flex border-b border-neutral-800">
             <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition">
-                Email a Heslo
+                Ranní přihlášení (Heslo)
             </button>
             <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition">
-                Rychlý PIN (6 číslic)
+                Rychlý PIN / RFID čip
             </button>
         </div>
 
-        <!-- Chybová zpráva -->
+        <!-- Chybové hlášení -->
         <div id="auth-error" class="hidden p-3 bg-red-950/80 border border-red-800 rounded-lg text-red-200 text-xs text-center font-medium"></div>
 
-        <!-- Formulář 1: Email + Heslo -->
+        <!-- Indikátor stavu RFID čtečky -->
+        <div id="rfid-status" class="hidden p-2 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center space-x-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[11px] text-neutral-300 font-medium">RFID čtečka aktivní – přiložte čip</span>
+        </div>
+
+        <!-- Formulář 1: Plné ranní přihlášení (Email + Heslo) -->
         <form id="form-full" class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
@@ -64,36 +70,45 @@
             </div>
 
             <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
-                Přihlásit do směny
+                Zahájit denní směnu
             </button>
         </form>
 
-        <!-- Formulář 2: Rychlý PIN -->
-        <form id="form-pin" class="space-y-4 hidden">
+        <!-- Formulář 2: Rychlý PIN nebo RFID -->
+        <div id="form-pin" class="space-y-4 hidden">
             <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
-                <input type="email" id="input-pin-email" required placeholder="jmeno@pekarstvi.cz"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider text-center mb-1.5">Zadejte PIN nebo přiložte RFID čip</label>
+                <input type="password" id="input-pin" readonly maxlength="6" placeholder="••••••"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.6em] text-2xl text-gold font-bold focus:outline-none focus:border-gold transition">
+                <p class="text-[11px] text-neutral-400 mt-1.5 text-center">Vyžaduje předchozí ranní přihlášení heslem.</p>
             </div>
 
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Denní 6místný PIN</label>
-                <input type="password" id="input-pin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.6em] text-xl text-gold font-bold focus:outline-none focus:border-gold transition">
-                <p class="text-[11px] text-neutral-400 mt-1.5 text-center">PIN lze použít jen po ranním přihlášení heslem.</p>
+            <!-- Numerická klávesnice -->
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button type="button" onclick="stiskCisla('1')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">1</button>
+                <button type="button" onclick="stiskCisla('2')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">2</button>
+                <button type="button" onclick="stiskCisla('3')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">3</button>
+                
+                <button type="button" onclick="stiskCisla('4')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">4</button>
+                <button type="button" onclick="stiskCisla('5')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">5</button>
+                <button type="button" onclick="stiskCisla('6')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">6</button>
+                
+                <button type="button" onclick="stiskCisla('7')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">7</button>
+                <button type="button" onclick="stiskCisla('8')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">8</button>
+                <button type="button" onclick="stiskCisla('9')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">9</button>
+                
+                <button type="button" onclick="smazatPin()" class="bg-neutral-900 hover:bg-red-950/60 text-red-400 font-bold py-3 rounded-lg text-lg border border-neutral-800 transition">⌫</button>
+                <button type="button" onclick="stiskCisla('0')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">0</button>
+                <button type="button" onclick="overitPin()" class="bg-gold hover:bg-yellow-500 text-black font-extrabold py-3 rounded-lg text-sm transition">OK</button>
             </div>
-
-            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
-                Rychle odemknout
-            </button>
-        </form>
+        </div>
 
         <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-4">
-            Ukázkový účet: <span class="text-neutral-400 font-mono">vedouci@pekarstvi.cz</span> | heslo: <span class="text-neutral-400 font-mono">kralupy123</span> | PIN: <span class="text-neutral-400 font-mono">987654</span>
+            Test: <span class="text-neutral-400 font-mono">vedouci@pekarstvi.cz</span> (heslo: <span class="text-neutral-400 font-mono">kralupy123</span> | PIN: <span class="text-neutral-400 font-mono">987654</span> | RFID čip UID: <span class="text-neutral-400 font-mono">RFID001</span>)
         </div>
     </div>
 
-    <!-- PŘIHLÁŠENÉ ROZHRANÍ (DASHBOARD) -->
+    <!-- ZABEZPEČENÝ DASHBOARD -->
     <div id="app-dashboard" class="hidden w-full max-w-5xl space-y-6">
         <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-xl flex justify-between items-center">
             <div>
@@ -118,13 +133,15 @@
     </div>
 
     <script>
+        // DATABÁZE UŽIVATELŮ: UNIKÁTNÍ PIN A RFID UID
         const UZIVATELE = [
             {
                 email: "vedouci@pekarstvi.cz",
                 heslo: "kralupy123",
                 pin: "987654",
+                rfidUid: "RFID001", // UID čipu nebo karty
                 jmeno: "Karel Vedoucí",
-                role: "Vedoucí výroby",
+                role: "Vedoucí výroby Kralupy",
                 strediska: ["pekarna-kralupy", "bistro-libcice"],
                 moduly: ["dochazka", "prevodky", "vyroba"]
             },
@@ -132,10 +149,21 @@
                 email: "vedeni@pekarstvi.cz",
                 heslo: "admin123",
                 pin: "112233",
+                rfidUid: "RFID002",
                 jmeno: "Centrální Vedení",
                 role: "Vedení společnosti",
                 strediska: ["pekarna-kralupy", "knedlikarna-libcice", "bistro-libcice", "vedeni-spolecnosti"],
                 moduly: ["dochazka", "prevodky", "vyroba", "audit", "zamestnanci"]
+            },
+            {
+                email: "pekar@pekarstvi.cz",
+                heslo: "pekar123",
+                pin: "554433",
+                rfidUid: "RFID003",
+                jmeno: "Jan Pekař",
+                role: "Pekař Kralupy",
+                strediska: ["pekarna-kralupy"],
+                moduly: ["dochazka", "vyroba"]
             }
         ];
 
@@ -157,6 +185,11 @@
         const authPanel = document.getElementById("auth-panel");
         const dashboard = document.getElementById("app-dashboard");
         const authError = document.getElementById("auth-error");
+        const rfidStatus = document.getElementById("rfid-status");
+        const pinInput = document.getElementById("input-pin");
+
+        let rfidBuffer = "";
+        let posledniCasKlavesy = 0;
 
         function dnesniDatumKlic() {
             return new Date().toISOString().slice(0, 10);
@@ -164,6 +197,7 @@
 
         function zmenitRezim(rezim) {
             authError.classList.add("hidden");
+            smazatPin();
             const tabFull = document.getElementById("tab-full");
             const tabPin = document.getElementById("tab-pin");
             const formFull = document.getElementById("form-full");
@@ -174,14 +208,17 @@
                 tabPin.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
                 formFull.classList.remove("hidden");
                 formPin.classList.add("hidden");
+                rfidStatus.classList.add("hidden");
             } else {
                 tabPin.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
                 tabFull.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
                 formPin.classList.remove("hidden");
                 formFull.classList.add("hidden");
+                rfidStatus.classList.remove("hidden");
             }
         }
 
+        // 1. RANNÍ PŘIHLÁŠENÍ (EMAIL + HESLO)
         document.getElementById("form-full").addEventListener("submit", (e) => {
             e.preventDefault();
             const email = document.getElementById("input-email").value.trim().toLowerCase();
@@ -195,33 +232,96 @@
                 return;
             }
 
-            localStorage.setItem("login_pw_date_" + uzivatel.email, dnesniDatumKlic());
-            spustitAplikaci(uzivatel, "Ověřeno heslem (Denní relace aktivní)");
+            localStorage.setItem("session_pw_ok_" + uzivatel.email, dnesniDatumKlic());
+            spustitAplikaci(uzivatel, "Ranní ověření heslem (Denní relace aktivní)");
         });
 
-        document.getElementById("form-pin").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const email = document.getElementById("input-pin-email").value.trim().toLowerCase();
-            const pin = document.getElementById("input-pin").value.trim();
+        // 2. KLÁVESNICE PRO PIN
+        function stiskCisla(cislice) {
+            if (pinInput.value.length < 6) {
+                pinInput.value += cislice;
+                authError.classList.add("hidden");
+                if (pinInput.value.length === 6) {
+                    overitPin();
+                }
+            }
+        }
 
-            const uzivatel = UZIVATELE.find(u => u.email === email);
+        function smazatPin() {
+            pinInput.value = "";
+            authError.classList.add("hidden");
+        }
 
-            if (!uzivatel || uzivatel.pin !== pin) {
-                authError.textContent = "Neplatný PIN nebo neznámý email.";
+        function overitPin() {
+            const pin = pinInput.value.trim();
+            if (pin.length !== 6) {
+                authError.textContent = "PIN musí mít přesně 6 číslic.";
                 authError.classList.remove("hidden");
                 return;
             }
 
-            const datumHesla = localStorage.getItem("login_pw_date_" + uzivatel.email);
+            const uzivatel = UZIVATELE.find(u => u.pin === pin);
+            if (!uzivatel) {
+                authError.textContent = "Neznámý PIN. Zkontrolujte zadání.";
+                authError.classList.remove("hidden");
+                pinInput.value = "";
+                return;
+            }
+
+            validovatADonastavit(uzivatel, "Rychlé odemknutí (PIN)");
+        }
+
+        // 3. OBSLUHA HARDWAROVÉHO RFID ČIPU
+        window.addEventListener("keydown", (e) => {
+            // Pokud je otevřený formulář pro heslo a uživatel zrovna píše do pole, ignorujeme RFID
+            const aktivniElement = document.activeElement;
+            if (aktivniElement && (aktivniElement.id === "input-email" || aktivniElement.id === "input-password")) {
+                return;
+            }
+
+            const ted = Date.now();
+            // Pokud je prodleva mezi znaky delší než 100ms, jde o ruční psaní, nikoli čtečku
+            if (ted - posledniCasKlavesy > 100) {
+                rfidBuffer = "";
+            }
+            posledniCasKlavesy = ted;
+
+            if (e.key === "Enter") {
+                if (rfidBuffer.length >= 4) {
+                    e.preventDefault();
+                    overitRfid(rfidBuffer);
+                    rfidBuffer = "";
+                }
+            } else if (e.key.length === 1) {
+                rfidBuffer += e.key;
+            }
+        });
+
+        function overitRfid(kodCipu) {
+            const uzivatel = UZIVATELE.find(u => u.rfidUid === kodCipu);
+            if (!uzivatel) {
+                authError.textContent = `Neznámý RFID čip (${kodCipu}). Karta není přiřazena.`;
+                authError.classList.remove("hidden");
+                return;
+            }
+
+            validovatADonastavit(uzivatel, "Rychlé odemknutí (RFID čip)");
+        }
+
+        // SPOLEČNÁ KONTROLA DENNÍ RELACE PRO PIN I RFID
+        function validovatADonastavit(uzivatel, zpusob) {
+            const datumHesla = localStorage.getItem("session_pw_ok_" + uzivatel.email);
             if (datumHesla !== dnesniDatumKlic()) {
-                authError.textContent = "Dnes se musíte nejprve 1x přihlásit celým heslem. PIN není pro dnešek aktivován.";
+                authError.textContent = `Uživatel ${uzivatel.jmeno} se dnes ještě nepřihlásil heslem. Pro aktivaci rychlého přístupu se nejprve přihlaste heslem.`;
                 authError.classList.remove("hidden");
+                pinInput.value = "";
                 return;
             }
 
-            spustitAplikaci(uzivatel, "Rychlé přihlášení (PIN)");
-        });
+            spustitAplikaci(uzivatel, zpusob);
+        }
 
+        // 4. ZOBRAZENÍ SYSTÉMU PODLE PRÁV
         function spustitAplikaci(uzivatel, typPrihlaseni) {
             authError.classList.add("hidden");
             authPanel.classList.add("hidden");
@@ -263,7 +363,7 @@
             dashboard.classList.add("hidden");
             authPanel.classList.remove("hidden");
             document.getElementById("input-password").value = "";
-            document.getElementById("input-pin").value = "";
+            smazatPin();
         }
     </script>
 </body>
