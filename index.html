@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pekařství Ludvík & Mistrík - Systém řízení</title>
+    <!-- Načtení Tailwind CSS frameworku -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Moderní Google Font Inter s plnou českou diakritikou -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
         body {
             background-color: #000000;
             color: #FFFFFF;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .text-gold { color: #D4AF37; }
         .border-gold { border-color: #D4AF37; }
@@ -21,66 +30,66 @@
 
     <!-- AUTENTIZAČNÍ BOX -->
     <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl space-y-6">
-        <header class="text-center space-y-1">
-            <h1 class="text-2xl font-black text-gold tracking-wide">🥖 Pekařství Ludvík & Mistrík</h1>
-            <p class="text-sm font-medium text-white">Centrální systém řízení středisek</p>
-            <p class="text-xs text-neutral-400">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice • Vedení</p>
+        <header class="text-center space-y-1.5">
+            <h1 class="text-2xl font-bold text-gold tracking-tight">🥖 Pekařství Ludvík &amp; Mistrík</h1>
+            <p class="text-sm font-semibold text-white tracking-normal">Centrální systém řízení středisek</p>
+            <p class="text-xs text-neutral-400 font-normal">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice • Vedení</p>
         </header>
 
-        <!-- Volič metody přihlášení -->
+        <!-- Přepínač metod přihlášení -->
         <div class="flex border-b border-neutral-800">
-            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition">
+            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition">
                 Email a Heslo
             </button>
-            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2 text-xs font-bold text-neutral-400 transition">
+            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition">
                 Rychlý PIN (6 číslic)
             </button>
         </div>
 
-        <!-- Chybové zprávy -->
+        <!-- Chybová zpráva -->
         <div id="auth-error" class="hidden p-3 bg-red-950/80 border border-red-800 rounded-lg text-red-200 text-xs text-center font-medium"></div>
 
-        <!-- Formulář 1: Plné přihlášení (Email + Heslo) -->
+        <!-- Formulář 1: Email + Heslo -->
         <form id="form-full" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold text-white uppercase mb-1">Pracovní email</label>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
                 <input type="email" id="input-email" required placeholder="jmeno@pekarstvi.cz"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-white uppercase mb-1">Heslo</label>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Heslo</label>
                 <input type="password" id="input-password" required placeholder="••••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
             </div>
 
-            <button type="submit" class="w-full bg-gold text-black font-extrabold py-3 rounded-lg text-sm transition">
+            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
                 Přihlásit do směny
             </button>
         </form>
 
-        <!-- Formulář 2: Rychlé přihlášení (PIN) -->
+        <!-- Formulář 2: Rychlý PIN -->
         <form id="form-pin" class="space-y-4 hidden">
             <div>
-                <label class="block text-xs font-semibold text-white uppercase mb-1">Váš pracovní email</label>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
                 <input type="email" id="input-pin-email" required placeholder="jmeno@pekarstvi.cz"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-white uppercase mb-1">Denní 6místný PIN</label>
+                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Denní 6místný PIN</label>
                 <input type="password" id="input-pin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.5em] text-lg text-gold font-bold focus:outline-none focus:border-gold">
-                <p class="text-[11px] text-neutral-400 mt-1 text-center">PIN lze použít jen po ranním přihlášení heslem.</p>
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.6em] text-xl text-gold font-bold focus:outline-none focus:border-gold transition">
+                <p class="text-[11px] text-neutral-400 mt-1.5 text-center">PIN lze použít jen po ranním přihlášení heslem.</p>
             </div>
 
-            <button type="submit" class="w-full bg-gold text-black font-extrabold py-3 rounded-lg text-sm transition">
+            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
                 Rychle odemknout
             </button>
         </form>
 
-        <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-3">
-            Ukázkový účet: <code>vedouci@pekarstvi.cz</code> | heslo: <code>kralupy123</code> | PIN: <code>987654</code>
+        <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-4">
+            Ukázkový účet: <span class="text-neutral-400 font-mono">vedouci@pekarstvi.cz</span> | heslo: <span class="text-neutral-400 font-mono">kralupy123</span> | PIN: <span class="text-neutral-400 font-mono">987654</span>
         </div>
     </div>
 
@@ -88,30 +97,27 @@
     <div id="app-dashboard" class="hidden w-full max-w-5xl space-y-6">
         <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-xl flex justify-between items-center">
             <div>
-                <h2 class="text-xl font-black text-gold" id="dash-user-name">Zaměstnanec</h2>
-                <p class="text-sm font-semibold text-white" id="dash-user-role">Role a středisko</p>
+                <h2 class="text-xl font-bold text-gold tracking-tight" id="dash-user-name">Zaměstnanec</h2>
+                <p class="text-sm font-medium text-white" id="dash-user-role">Role a středisko</p>
                 <span id="dash-auth-type" class="inline-block mt-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800"></span>
             </div>
-            <button onclick="odhlasit()" class="bg-black hover:bg-neutral-900 border border-neutral-800 hover:border-red-700 text-white hover:text-red-400 px-4 py-2 rounded-lg text-xs font-bold transition">
+            <button onclick="odhlasit()" class="bg-black hover:bg-neutral-900 border border-neutral-800 hover:border-red-700 text-white hover:text-red-400 px-4 py-2 rounded-lg text-xs font-semibold transition">
                 Uzamknout / Odhlásit
             </button>
         </header>
 
-        <!-- Střediska -->
-        <section class="space-y-2">
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Povolená střediska</h3>
+        <section class="space-y-2.5">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Povolená střediska</h3>
             <div id="strediska-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
         </section>
 
-        <!-- Moduly -->
-        <section class="space-y-2">
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Dostupné moduly</h3>
+        <section class="space-y-2.5">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Dostupné moduly</h3>
             <div id="moduly-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
         </section>
     </div>
 
     <script>
-        // MOCK UŽIVATELSKÁ DATABÁZE SE 6MÍSTNÝM PINEM
         const UZIVATELE = [
             {
                 email: "vedouci@pekarstvi.cz",
@@ -164,19 +170,18 @@
             const formPin = document.getElementById("form-pin");
 
             if (rezim === "full") {
-                tabFull.className = "flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition";
-                tabPin.className = "flex-1 py-2 text-xs font-bold text-neutral-400 transition";
+                tabFull.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
+                tabPin.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
                 formFull.classList.remove("hidden");
                 formPin.classList.add("hidden");
             } else {
-                tabPin.className = "flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition";
-                tabFull.className = "flex-1 py-2 text-xs font-bold text-neutral-400 transition";
+                tabPin.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
+                tabFull.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
                 formPin.classList.remove("hidden");
                 formFull.classList.add("hidden");
             }
         }
 
-        // PŘIHLÁŠENÍ: EMAIL + HESLO
         document.getElementById("form-full").addEventListener("submit", (e) => {
             e.preventDefault();
             const email = document.getElementById("input-email").value.trim().toLowerCase();
@@ -190,12 +195,10 @@
                 return;
             }
 
-            // Uložíme záznam o dnešním plném přihlášení pro daný email
             localStorage.setItem("login_pw_date_" + uzivatel.email, dnesniDatumKlic());
             spustitAplikaci(uzivatel, "Ověřeno heslem (Denní relace aktivní)");
         });
 
-        // PŘIHLÁŠENÍ: RYCHLÝ PIN
         document.getElementById("form-pin").addEventListener("submit", (e) => {
             e.preventDefault();
             const email = document.getElementById("input-pin-email").value.trim().toLowerCase();
@@ -209,7 +212,6 @@
                 return;
             }
 
-            // Ověření, zda se dnes přihlásil heslem
             const datumHesla = localStorage.getItem("login_pw_date_" + uzivatel.email);
             if (datumHesla !== dnesniDatumKlic()) {
                 authError.textContent = "Dnes se musíte nejprve 1x přihlásit celým heslem. PIN není pro dnešek aktivován.";
@@ -229,7 +231,6 @@
             document.getElementById("dash-user-role").textContent = `${uzivatel.role} (${uzivatel.email})`;
             document.getElementById("dash-auth-type").textContent = typPrihlaseni;
 
-            // Vykreslení středisek
             const strediskaContainer = document.getElementById("strediska-grid");
             strediskaContainer.innerHTML = "";
             uzivatel.strediska.forEach(id => {
@@ -238,21 +239,20 @@
                     const card = document.createElement("div");
                     card.className = "bg-neutral-950 border border-neutral-800 p-4 rounded-xl";
                     card.innerHTML = `
-                        <h4 class="font-bold text-gold text-sm">${s.nazev}</h4>
-                        <p class="text-xs text-white mt-1">${s.popis}</p>
+                        <h4 class="font-semibold text-gold text-sm">${s.nazev}</h4>
+                        <p class="text-xs text-white mt-1 font-normal">${s.popis}</p>
                     `;
                     strediskaContainer.appendChild(card);
                 }
             });
 
-            // Vykreslení modulů
             const modulyContainer = document.getElementById("moduly-grid");
             modulyContainer.innerHTML = "";
             uzivatel.moduly.forEach(klic => {
                 const nazevModulu = SEZNAM_MODULU[klic];
                 if (nazevModulu) {
                     const card = document.createElement("div");
-                    card.className = "bg-neutral-950 border border-neutral-800 hover:border-gold/60 p-4 rounded-xl cursor-pointer transition text-xs font-bold text-white";
+                    card.className = "bg-neutral-950 border border-neutral-800 hover:border-gold/60 p-4 rounded-xl cursor-pointer transition text-xs font-semibold text-white";
                     card.textContent = nazevModulu;
                     modulyContainer.appendChild(card);
                 }
