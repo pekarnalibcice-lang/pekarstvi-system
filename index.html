@@ -5,198 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pekařství Ludvík & Mistrík - Systém řízení</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #FFFFFF;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .text-gold { color: #D4AF37; }
+        .border-gold { border-color: #D4AF37; }
+        .bg-gold { background-color: #D4AF37; }
+        .bg-gold:hover { background-color: #C5A028; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center items-center p-4 font-sans">
+<body class="min-h-screen flex flex-col justify-center items-center p-4">
 
-    <!-- PŘIHLAŠOVACÍ MODUL -->
-    <div id="auth-panel" class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl space-y-6">
+    <!-- AUTENTIZAČNÍ BOX -->
+    <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-8 shadow-2xl space-y-6">
         <header class="text-center space-y-1">
-            <h1 class="text-2xl font-black text-amber-400 tracking-wide">🥖 Pekařství Ludvík & Mistrík</h1>
-            <p class="text-xs text-slate-400">Centrální autentizace personálu a správy</p>
+            <h1 class="text-2xl font-black text-gold tracking-wide">🥖 Pekařství Ludvík & Mistrík</h1>
+            <p class="text-sm font-medium text-white">Centrální systém řízení středisek</p>
+            <p class="text-xs text-neutral-400">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice • Vedení</p>
         </header>
 
-        <!-- Chybová hláška -->
-        <div id="auth-error" class="hidden p-3 bg-rose-950/80 border border-rose-800 rounded text-rose-300 text-xs font-semibold text-center"></div>
+        <!-- Volič metody přihlášení -->
+        <div class="flex border-b border-neutral-800">
+            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition">
+                Email a Heslo
+            </button>
+            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2 text-xs font-bold text-neutral-400 transition">
+                Rychlý PIN (6 číslic)
+            </button>
+        </div>
 
-        <form id="login-form" class="space-y-4">
+        <!-- Chybové zprávy -->
+        <div id="auth-error" class="hidden p-3 bg-red-950/80 border border-red-800 rounded-lg text-red-200 text-xs text-center font-medium"></div>
+
+        <!-- Formulář 1: Plné přihlášení (Email + Heslo) -->
+        <form id="form-full" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Identifikátor / Osobní kód</label>
-                <input type="text" id="user-id" required autocomplete="off" placeholder="Např. KRAL-01 nebo VEDENI"
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-400">
+                <label class="block text-xs font-semibold text-white uppercase mb-1">Pracovní email</label>
+                <input type="email" id="input-email" required placeholder="jmeno@pekarstvi.cz"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Bezpečnostní PIN</label>
-                <input type="password" id="user-pin" required maxlength="6" placeholder="••••"
-                    class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white tracking-widest text-center focus:outline-none focus:border-amber-400">
+                <label class="block text-xs font-semibold text-white uppercase mb-1">Heslo</label>
+                <input type="password" id="input-password" required placeholder="••••••••"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
             </div>
 
-            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg">
-                Vstoupit do systému
+            <button type="submit" class="w-full bg-gold text-black font-extrabold py-3 rounded-lg text-sm transition">
+                Přihlásit do směny
             </button>
         </form>
 
-        <div class="text-[11px] text-slate-500 text-center border-t border-slate-800 pt-4">
-            Testovací účty: PIN <strong>1234</strong> (kódy: <code>VEDENI</code>, <code>KRAL-01</code>, <code>LIBC-01</code>, <code>BIST-01</code>)
+        <!-- Formulář 2: Rychlé přihlášení (PIN) -->
+        <form id="form-pin" class="space-y-4 hidden">
+            <div>
+                <label class="block text-xs font-semibold text-white uppercase mb-1">Váš pracovní email</label>
+                <input type="email" id="input-pin-email" required placeholder="jmeno@pekarstvi.cz"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-white uppercase mb-1">Denní 6místný PIN</label>
+                <input type="password" id="input-pin" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••"
+                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.5em] text-lg text-gold font-bold focus:outline-none focus:border-gold">
+                <p class="text-[11px] text-neutral-400 mt-1 text-center">PIN lze použít jen po ranním přihlášení heslem.</p>
+            </div>
+
+            <button type="submit" class="w-full bg-gold text-black font-extrabold py-3 rounded-lg text-sm transition">
+                Rychle odemknout
+            </button>
+        </form>
+
+        <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-3">
+            Ukázkový účet: <code>vedouci@pekarstvi.cz</code> | heslo: <code>kralupy123</code> | PIN: <code>987654</code>
         </div>
     </div>
 
-    <!-- ZABEZPEČENÝ DASHBOARD (Zobrazí se po přihlášení) -->
+    <!-- PŘIHLÁŠENÉ ROZHRANÍ (DASHBOARD) -->
     <div id="app-dashboard" class="hidden w-full max-w-5xl space-y-6">
-        <header class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex justify-between items-center">
+        <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-xl flex justify-between items-center">
             <div>
-                <h2 class="text-lg font-bold text-amber-400" id="dash-user-name">Přihlášený uživatel</h2>
-                <p class="text-xs text-slate-400" id="dash-user-role">Role a oprávnění</p>
+                <h2 class="text-xl font-black text-gold" id="dash-user-name">Zaměstnanec</h2>
+                <p class="text-sm font-semibold text-white" id="dash-user-role">Role a středisko</p>
+                <span id="dash-auth-type" class="inline-block mt-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800"></span>
             </div>
-            <button onclick="odhlasit()" class="bg-slate-800 hover:bg-rose-900 text-slate-300 hover:text-rose-200 border border-slate-700 hover:border-rose-700 px-3 py-1.5 rounded text-xs font-semibold transition">
-                Odhlásit se
+            <button onclick="odhlasit()" class="bg-black hover:bg-neutral-900 border border-neutral-800 hover:border-red-700 text-white hover:text-red-400 px-4 py-2 rounded-lg text-xs font-bold transition">
+                Uzamknout / Odhlásit
             </button>
         </header>
 
-        <!-- Sekce dostupných středisek -->
-        <section class="space-y-3">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Přístupná střediska</h3>
-            <div id="strediska-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+        <!-- Střediska -->
+        <section class="space-y-2">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Povolená střediska</h3>
+            <div id="strediska-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
         </section>
 
-        <!-- Sekce přístupných modulů -->
-        <section class="space-y-3">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Dostupné moduly</h3>
+        <!-- Moduly -->
+        <section class="space-y-2">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Dostupné moduly</h3>
             <div id="moduly-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"></div>
         </section>
     </div>
 
     <script>
-        // 1. BEZPEČNOSTNÍ MODEL A DEFINICE PRÁV (MOCK DATA)
+        // MOCK UŽIVATELSKÁ DATABÁZE SE 6MÍSTNÝM PINEM
         const UZIVATELE = [
             {
-                kod: "VEDENI",
-                pin: "1234",
+                email: "vedouci@pekarstvi.cz",
+                heslo: "kralupy123",
+                pin: "987654",
+                jmeno: "Karel Vedoucí",
+                role: "Vedoucí výroby",
+                strediska: ["pekarna-kralupy", "bistro-libcice"],
+                moduly: ["dochazka", "prevodky", "vyroba"]
+            },
+            {
+                email: "vedeni@pekarstvi.cz",
+                heslo: "admin123",
+                pin: "112233",
                 jmeno: "Centrální Vedení",
-                role: "ADMIN",
-                povolenaStrediska: ["all"],
-                povolenyModuly: ["dochazka", "prevodky", "vyroba", "audit", "sprava_uzivatelu"]
-            },
-            {
-                kod: "KRAL-01",
-                pin: "1234",
-                jmeno: "Vedoucí směny Kralupy",
-                role: "VEDOUCI_VYROBNY",
-                povolenaStrediska: ["pekarna-kralupy"],
-                povolenyModuly: ["dochazka", "prevodky", "vyroba"]
-            },
-            {
-                kod: "LIBC-01",
-                pin: "1234",
-                jmeno: "Směna Knedlíkárna Libčice",
-                role: "OBSLUHA",
-                povolenaStrediska: ["knedlikarna-libcice"],
-                povolenyModuly: ["dochazka", "vyroba"]
-            },
-            {
-                kod: "BIST-01",
-                pin: "1234",
-                jmeno: "Personál Bistro Libčice",
-                role: "OBSLUHA",
-                povolenaStrediska: ["bistro-libcice"],
-                povolenyModuly: ["dochazka", "prevodky"]
+                role: "Vedení společnosti",
+                strediska: ["pekarna-kralupy", "knedlikarna-libcice", "bistro-libcice", "vedeni-spolecnosti"],
+                moduly: ["dochazka", "prevodky", "vyroba", "audit", "zamestnanci"]
             }
         ];
 
-        const VSECHNA_STREDISKA = [
-            { id: "pekarna-kralupy", nazev: "Pekárna Kralupy", popis: "Výroba, Lahůdky, Cukrárna" },
-            { id: "knedlikarna-libcice", nazev: "Knedlíkárna Libčice", popis: "Velkovýroba a expedice" },
-            { id: "bistro-libcice", nazev: "Bistro Libčice", popis: "Přímý prodej a gastro" },
-            { id: "vedeni-spolecnosti", nazev: "Vedení společnosti", popis: "Centrála a controlling" }
-        ];
-
-        const DEFINICE_MODULU = {
-            dochazka: { nazev: "Evidence docházky", ikona: "🕒" },
-            prevodky: { nazev: "Vnitrofiremní převodky", ikona: "🔄" },
-            vyroba: { nazev: "Výrobní plány a normy", ikona: "📦" },
-            audit: { nazev: "Auditní záznamy", ikona: "📜" },
-            sprava_uzivatelu: { nazev: "Správa zaměstnanců", ikona: "👥" }
+        const SEZNAM_STREDISEK = {
+            "pekarna-kralupy": { nazev: "Pekárna Kralupy", popis: "Výrobna pečiva, lahůdky, cukrárna" },
+            "knedlikarna-libcice": { nazev: "Knedlíkárna Libčice", popis: "Výroba a expedice knedlíků" },
+            "bistro-libcice": { nazev: "Bistro Libčice", popis: "Gastro provoz a prodej" },
+            "vedeni-spolecnosti": { nazev: "Vedení společnosti", popis: "Centrální management a finance" }
         };
 
-        let neuspesnePokusy = 0;
+        const SEZNAM_MODULU = {
+            dochazka: "⏱️ Evidence docházky",
+            prevodky: "🔄 Interní převodky",
+            vyroba: "📋 Výrobní receptury",
+            audit: "🛡️ Bezpečnostní audit",
+            zamestnanci: "👥 Správa zaměstnanců"
+        };
+
         const authPanel = document.getElementById("auth-panel");
         const dashboard = document.getElementById("app-dashboard");
         const authError = document.getElementById("auth-error");
 
-        // 2. AUTENTIZAČNÍ LOGIKA
-        document.getElementById("login-form").addEventListener("submit", (e) => {
-            e.preventDefault();
+        function dnesniDatumKlic() {
+            return new Date().toISOString().slice(0, 10);
+        }
 
-            if (neuspesnePokusy >= 5) {
-                authError.textContent = "Účet dočasně zablokován z důvodu opakovaného chybného zadání.";
+        function zmenitRezim(rezim) {
+            authError.classList.add("hidden");
+            const tabFull = document.getElementById("tab-full");
+            const tabPin = document.getElementById("tab-pin");
+            const formFull = document.getElementById("form-full");
+            const formPin = document.getElementById("form-pin");
+
+            if (rezim === "full") {
+                tabFull.className = "flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition";
+                tabPin.className = "flex-1 py-2 text-xs font-bold text-neutral-400 transition";
+                formFull.classList.remove("hidden");
+                formPin.classList.add("hidden");
+            } else {
+                tabPin.className = "flex-1 py-2 text-xs font-bold text-gold border-b-2 border-gold transition";
+                tabFull.className = "flex-1 py-2 text-xs font-bold text-neutral-400 transition";
+                formPin.classList.remove("hidden");
+                formFull.classList.add("hidden");
+            }
+        }
+
+        // PŘIHLÁŠENÍ: EMAIL + HESLO
+        document.getElementById("form-full").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("input-email").value.trim().toLowerCase();
+            const heslo = document.getElementById("input-password").value;
+
+            const uzivatel = UZIVATELE.find(u => u.email === email && u.heslo === heslo);
+
+            if (!uzivatel) {
+                authError.textContent = "Chybný email nebo heslo.";
                 authError.classList.remove("hidden");
                 return;
             }
 
-            const id = document.getElementById("user-id").value.trim().toUpperCase();
-            const pin = document.getElementById("user-pin").value.trim();
-
-            const uzivatel = UZIVATELE.find(u => u.kod === id && u.pin === pin);
-
-            if (uzivatel) {
-                neuspesnePokusy = 0;
-                authError.classList.add("hidden");
-                prihlasitUzivatele(uzivatel);
-            } else {
-                neuspesnePokusy++;
-                authError.textContent = `Neplatné přihlašovací údaje. (Zbývá pokusů: ${5 - neuspesnePokusy})`;
-                authError.classList.remove("hidden");
-            }
+            // Uložíme záznam o dnešním plném přihlášení pro daný email
+            localStorage.setItem("login_pw_date_" + uzivatel.email, dnesniDatumKlic());
+            spustitAplikaci(uzivatel, "Ověřeno heslem (Denní relace aktivní)");
         });
 
-        // 3. VYHODNOCENÍ PRÁV A ZOBRAZENÍ
-        function prihlasitUzivatele(uzivatel) {
+        // PŘIHLÁŠENÍ: RYCHLÝ PIN
+        document.getElementById("form-pin").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("input-pin-email").value.trim().toLowerCase();
+            const pin = document.getElementById("input-pin").value.trim();
+
+            const uzivatel = UZIVATELE.find(u => u.email === email);
+
+            if (!uzivatel || uzivatel.pin !== pin) {
+                authError.textContent = "Neplatný PIN nebo neznámý email.";
+                authError.classList.remove("hidden");
+                return;
+            }
+
+            // Ověření, zda se dnes přihlásil heslem
+            const datumHesla = localStorage.getItem("login_pw_date_" + uzivatel.email);
+            if (datumHesla !== dnesniDatumKlic()) {
+                authError.textContent = "Dnes se musíte nejprve 1x přihlásit celým heslem. PIN není pro dnešek aktivován.";
+                authError.classList.remove("hidden");
+                return;
+            }
+
+            spustitAplikaci(uzivatel, "Rychlé přihlášení (PIN)");
+        });
+
+        function spustitAplikaci(uzivatel, typPrihlaseni) {
+            authError.classList.add("hidden");
             authPanel.classList.add("hidden");
             dashboard.classList.remove("hidden");
 
             document.getElementById("dash-user-name").textContent = uzivatel.jmeno;
-            document.getElementById("dash-user-role").textContent = `Role: ${uzivatel.role} | Identifikátor: ${uzivatel.kod}`;
+            document.getElementById("dash-user-role").textContent = `${uzivatel.role} (${uzivatel.email})`;
+            document.getElementById("dash-auth-type").textContent = typPrihlaseni;
 
-            // Vykreslení povolených středisek
+            // Vykreslení středisek
             const strediskaContainer = document.getElementById("strediska-grid");
             strediskaContainer.innerHTML = "";
-
-            const dostupnaStrediska = uzivatel.povolenaStrediska.includes("all")
-                ? VSECHNA_STREDISKA
-                : VSECHNA_STREDISKA.filter(s => uzivatel.povolenaStrediska.includes(s.id));
-
-            dostupnaStrediska.forEach(s => {
-                const karta = document.createElement("div");
-                karta.className = "bg-slate-900 border border-slate-800 p-4 rounded-lg";
-                karta.innerHTML = `
-                    <h4 class="font-bold text-amber-300 text-sm">${s.nazev}</h4>
-                    <p class="text-xs text-slate-400 mt-1">${s.popis}</p>
-                `;
-                strediskaContainer.appendChild(karta);
+            uzivatel.strediska.forEach(id => {
+                const s = SEZNAM_STREDISEK[id];
+                if (s) {
+                    const card = document.createElement("div");
+                    card.className = "bg-neutral-950 border border-neutral-800 p-4 rounded-xl";
+                    card.innerHTML = `
+                        <h4 class="font-bold text-gold text-sm">${s.nazev}</h4>
+                        <p class="text-xs text-white mt-1">${s.popis}</p>
+                    `;
+                    strediskaContainer.appendChild(card);
+                }
             });
 
-            // Vykreslení povolených modulů
+            // Vykreslení modulů
             const modulyContainer = document.getElementById("moduly-grid");
             modulyContainer.innerHTML = "";
-
-            uzivatel.povolenyModuly.forEach(modulKlic => {
-                const info = DEFINICE_MODULU[modulKlic];
-                if (info) {
-                    const tlacitko = document.createElement("div");
-                    tlacitko.className = "bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/50 p-4 rounded-lg cursor-pointer transition flex items-center space-x-3";
-                    tlacitko.innerHTML = `
-                        <span class="text-xl">${info.ikona}</span>
-                        <span class="text-xs font-semibold text-slate-200">${info.nazev}</span>
-                    `;
-                    modulyContainer.appendChild(tlacitko);
+            uzivatel.moduly.forEach(klic => {
+                const nazevModulu = SEZNAM_MODULU[klic];
+                if (nazevModulu) {
+                    const card = document.createElement("div");
+                    card.className = "bg-neutral-950 border border-neutral-800 hover:border-gold/60 p-4 rounded-xl cursor-pointer transition text-xs font-bold text-white";
+                    card.textContent = nazevModulu;
+                    modulyContainer.appendChild(card);
                 }
             });
         }
 
         function odhlasit() {
-            document.getElementById("login-form").reset();
             dashboard.classList.add("hidden");
             authPanel.classList.remove("hidden");
+            document.getElementById("input-password").value = "";
+            document.getElementById("input-pin").value = "";
         }
     </script>
 </body>
