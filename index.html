@@ -3,541 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pekařství Ludvík & Mistrík - Systém řízení</title>
-    <!-- Tailwind CSS -->
+    <title>Pekařství Ludvík & Mistrík - Interní provozní a objednávkový systém</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Moderní Google Font Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="css/custom.css">
     <style>
-        body {
-            background-color: #000000;
-            color: #FFFFFF;
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        /* Doplňková pravidla pro plynulé přechody a zobrazení */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .pin-digit-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #78350f;
+            display: inline-block;
+            transition: all 0.15s ease-in-out;
         }
-        .text-gold { color: #D4AF37; }
-        .border-gold { border-color: #D4AF37; }
-        .bg-gold { background-color: #D4AF37; }
-        .bg-gold:hover { background-color: #C5A028; }
+        .pin-digit-dot.filled {
+            background-color: #78350f;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-center items-center p-4">
+<body class="bg-stone-100 text-stone-900 min-h-screen flex flex-col font-sans antialiased selection:bg-amber-800 selection:text-white">
 
-    <!-- HLAVNÍ PŘIHLAŠOVACÍ PANEL -->
-    <div id="auth-panel" class="w-full max-w-md bg-neutral-950 border border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <header class="text-center space-y-1.5">
-            <h1 class="text-2xl font-bold text-gold tracking-tight">🥖 Pekařství Ludvík &amp; Mistrík</h1>
-            <p class="text-sm font-semibold text-white">Centrální systém řízení</p>
-            <p class="text-xs text-neutral-400 font-normal" id="header-subtitle">Pekárna Kralupy • Knedlíkárna Libčice • Bistro Libčice</p>
+    <!-- ================================================================= -->
+    <!-- HORNÍ NAVIGAČNÍ PANEL                                              -->
+    <!-- ================================================================= -->
+    <header class="bg-amber-950 text-white shadow-lg sticky top-0 z-50 border-b border-amber-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
             
-            <!-- Odznak autorizovaného zařízení -->
-            <div id="device-badge" class="pt-1"></div>
-        </header>
+            <!-- Logo a identita provozovny -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-900 flex items-center justify-center text-2xl shadow-inner border border-amber-700">
+                    🥖
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-none text-white">
+                        Pekařství Ludvík &amp; Mistrík
+                    </h1>
+                    <div class="flex items-center gap-2 text-xs text-amber-300 mt-1 font-medium">
+                        <span id="header-device-badge" class="inline-flex items-center gap-1 bg-amber-900/80 px-2 py-0.5 rounded border border-amber-700">
+                            <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                            <span id="header-device-text">Terminál: Zjišťování...</span>
+                        </span>
+                        <span>•</span>
+                        <span id="header-location-text" class="text-amber-200">Pobočka: Libčice</span>
+                        <span>•</span>
+                        <span id="header-user-badge" class="text-stone-300">Nepřihlášen</span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Přepínač metod -->
-        <div class="flex border-b border-neutral-800">
-            <button id="tab-pin" type="button" onclick="zmenitRezim('pin')" class="flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition">
-                Rychlý PIN / RFID
-            </button>
-            <button id="tab-full" type="button" onclick="zmenitRezim('full')" class="flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition">
-                Správa (Heslo)
-            </button>
+            <!-- Přepínače modulů aplikace -->
+            <nav class="flex items-center gap-1.5 bg-amber-900/60 p-1 rounded-xl border border-amber-800/80">
+                <button id="nav-btn-attendance" class="nav-tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 bg-amber-800 text-white shadow">
+                    🕒 Docházka
+                </button>
+                <button id="nav-btn-orders" class="nav-tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 text-amber-200 hover:text-white hover:bg-amber-800/50">
+                    📦 Objednávky &amp; Výroba
+                </button>
+                <button id="nav-btn-admin" class="nav-tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-150 text-amber-200 hover:text-white hover:bg-amber-800/50">
+                    ⚙️ Správa terminálů
+                </button>
+            </nav>
+
         </div>
+    </header>
 
-        <!-- Chybová hláška -->
-        <div id="auth-error" class="hidden p-3 bg-red-950/80 border border-red-800 rounded-lg text-red-200 text-xs text-center font-medium"></div>
-
-        <!-- 1. BLOK PRO NEAUTORIZOVANÁ ZAŘÍZENÍ -->
-        <div id="device-unauthorized-box" class="hidden p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3 text-center">
-            <div class="text-amber-400 text-2xl">🔒</div>
-            <h3 class="text-sm font-bold text-white">Zařízení není ověřeno</h3>
-            <p class="text-xs text-neutral-400">PIN a RFID lze používat pouze na terminálech autorizovaných vedením společnosti.</p>
-            
-            <div class="space-y-2 pt-2">
-                <input type="password" id="input-activation-key" placeholder="Zadejte aktivační kód vedení"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-2.5 text-xs text-center text-white focus:outline-none focus:border-gold">
-                <button type="button" onclick="aktivovatZarizeni()" class="w-full bg-neutral-800 hover:bg-gold hover:text-black text-white font-bold py-2 rounded-lg text-xs transition">
-                    Aktivovat tento terminál
+    <!-- ================================================================= -->
+    <!-- GLOBÁLNÍ OZNAMOVACÍ PROSTOR (BEZPEČNOST & CHYBY)                   -->
+    <!-- ================================================================= -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-4">
+        <!-- Banner neautorizovaného zařízení -->
+        <div id="device-unauthorized-banner" class="hidden bg-rose-50 border-l-4 border-rose-600 p-4 rounded-r-xl shadow-sm mb-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">⚠️</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-900">Zařízení není autorizováno k provozu</h3>
+                        <p class="text-xs text-rose-700 mt-0.5">Tento prohlížeč nemá platný bezpečnostní certifikát (aktivační klíč). Docházka i odesílání objednávek jsou uzamčeny.</p>
+                    </div>
+                </div>
+                <button id="btn-show-activate-modal" class="bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors shadow">
+                    Zadat aktivační klíč
                 </button>
             </div>
-        </div>
-
-        <!-- 2. BLOK PRO RYCHLÝ PIN / RFID (Pouze na autorizovaném zařízení) -->
-        <div id="form-pin" class="space-y-4">
-            <!-- Indikátor čtečky -->
-            <div class="p-2 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center space-x-2">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[11px] text-neutral-300 font-medium">RFID čtečka terminálu připravena</span>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider text-center mb-1.5">Zadejte 6místný PIN nebo přiložte čip</label>
-                <input type="password" id="input-pin" readonly maxlength="6" placeholder="••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-center tracking-[0.6em] text-2xl text-gold font-bold focus:outline-none focus:border-gold transition">
-                <p class="text-[11px] text-neutral-400 mt-1 text-center">Vyžaduje ranní aktivaci heslem na tomto terminálu.</p>
-            </div>
-
-            <!-- Dotyková klávesnice -->
-            <div class="grid grid-cols-3 gap-2 pt-1">
-                <button type="button" onclick="stiskCisla('1')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">1</button>
-                <button type="button" onclick="stiskCisla('2')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">2</button>
-                <button type="button" onclick="stiskCisla('3')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">3</button>
-                <button type="button" onclick="stiskCisla('4')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">4</button>
-                <button type="button" onclick="stiskCisla('5')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">5</button>
-                <button type="button" onclick="stiskCisla('6')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">6</button>
-                <button type="button" onclick="stiskCisla('7')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">7</button>
-                <button type="button" onclick="stiskCisla('8')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">8</button>
-                <button type="button" onclick="stiskCisla('9')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">9</button>
-                <button type="button" onclick="smazatPin()" class="bg-neutral-900 hover:bg-red-950/60 text-red-400 font-bold py-3 rounded-lg text-lg border border-neutral-800 transition">⌫</button>
-                <button type="button" onclick="stiskCisla('0')" class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 rounded-lg text-lg border border-neutral-800 active:bg-gold active:text-black transition">0</button>
-                <button type="button" onclick="overitPin()" class="bg-gold hover:bg-yellow-500 text-black font-extrabold py-3 rounded-lg text-sm transition">OK</button>
-            </div>
-        </div>
-
-        <!-- 3. BLOK PRO EMAIL A HESLO (Funguje kdekoliv) -->
-        <form id="form-full" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Pracovní email</label>
-                <input type="email" id="input-email" required placeholder="jmeno@pekarstvi.cz"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-white uppercase tracking-wider mb-1.5">Heslo</label>
-                <input type="password" id="input-password" required placeholder="••••••••"
-                    class="w-full bg-black border border-neutral-750 rounded-lg p-3 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-gold transition">
-            </div>
-            <button type="submit" class="w-full bg-gold text-black font-bold py-3 rounded-lg text-sm tracking-wide transition shadow-lg">
-                Přihlásit do systému
-            </button>
-        </form>
-
-        <div class="text-[11px] text-neutral-500 text-center border-t border-neutral-900 pt-4">
-            Klíč k aktivaci zařízení pro test: <span class="text-neutral-300 font-mono">KRALUPY-TERM-01</span>
         </div>
     </div>
 
-    <!-- 4. ZABEZPEČENÝ DASHBOARD & DOCHÁZKA -->
-    <div id="app-dashboard" class="hidden w-full max-w-4xl space-y-6">
-        <header class="bg-neutral-950 border border-neutral-800 p-5 rounded-2xl flex flex-wrap justify-between items-center gap-4">
-            <div>
-                <div class="flex items-center space-x-3">
-                    <h2 class="text-xl font-bold text-gold" id="dash-user-name">Zaměstnanec</h2>
-                    <span id="dash-auth-badge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-neutral-900 text-neutral-400 border border-neutral-800"></span>
-                </div>
-                <p class="text-xs text-neutral-400 mt-0.5" id="dash-user-role">Role a středisko</p>
-            </div>
-            <div class="flex items-center space-x-3">
-                <span id="auto-lock-counter" class="text-xs text-neutral-500 font-mono hidden">Uzamčení za: <b id="lock-sec" class="text-gold">5</b>s</span>
-                <button onclick="odhlasit()" class="bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 hover:border-red-800 text-neutral-200 hover:text-red-400 px-4 py-2 rounded-lg text-xs font-semibold transition">
-                    Uzamknout
-                </button>
-            </div>
-        </header>
+    <!-- ================================================================= -->
+    <!-- HLAVNÍ OBSAHOVÁ ČÁST                                              -->
+    <!-- ================================================================= -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 w-full">
 
-        <!-- Modul: Evidence docházky -->
-        <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
-            <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
+        <!-- ============================================================= -->
+        <!-- MODUL 1: DOCHÁZKOVÝ SYSTÉM A TERMINÁL SMĚN                   -->
+        <!-- ============================================================= -->
+        <section id="module-attendance" class="tab-content active space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEVÝ BLOK: DOTYKOVÝ PIN TERMINÁL (5 sloupů) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-stone-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-base font-bold text-stone-900">Identifikace pracovníka</h2>
+                                <p class="text-xs text-stone-500">Zadejte 4místný PIN pro záznam akce</p>
+                            </div>
+                            <span class="text-xs bg-stone-100 text-stone-700 font-mono px-2 py-1 rounded border border-stone-200" id="terminal-date-display">
+                                --.--.----
+                            </span>
+                        </div>
+
+                        <!-- Živé digitální hodiny -->
+                        <div class="text-center py-4 bg-stone-50 rounded-xl border border-stone-200 mb-5">
+                            <div id="attendance-clock" class="text-4xl sm:text-5xl font-mono font-bold tracking-wider text-amber-950">
+                                --:--:--
+                            </div>
+                            <div class="text-[11px] text-stone-500 uppercase tracking-widest mt-1 font-semibold">Aktuální čas systému</div>
+                        </div>
+
+                        <!-- Indikace zadávaného PINu (tečky) -->
+                        <div class="flex justify-center items-center gap-3 py-2 mb-4">
+                            <span class="pin-digit-dot" id="dot-0"></span>
+                            <span class="pin-digit-dot" id="dot-1"></span>
+                            <span class="pin-digit-dot" id="dot-2"></span>
+                            <span class="pin-digit-dot" id="dot-3"></span>
+                        </div>
+
+                        <!-- Dotykový numerický číselník -->
+                        <div class="grid grid-cols-3 gap-2.5 max-w-xs mx-auto mb-4">
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="1">1</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="2">2</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="3">3</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="4">4</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="5">5</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="6">6</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="7">7</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="8">8</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="9">9</button>
+                            <button id="pin-btn-clear" class="bg-stone-200/80 hover:bg-stone-300 active:bg-rose-100 text-stone-700 font-bold py-3.5 rounded-xl border border-stone-300 text-xs uppercase tracking-wider transition-all shadow-sm">Smazat</button>
+                            <button class="pin-keypad-btn bg-stone-50 hover:bg-stone-100 active:bg-amber-100 active:text-amber-900 text-stone-800 font-bold py-3.5 rounded-xl border border-stone-200 text-xl transition-all shadow-sm" data-number="0">0</button>
+                            <button id="pin-btn-enter" class="bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-white font-bold py-3.5 rounded-xl border border-amber-900 text-xs uppercase tracking-wider transition-all shadow-sm">Potvrdit</button>
+                        </div>
+                    </div>
+
+                    <!-- Stavová zpráva klávesnice -->
+                    <div id="pin-feedback-msg" class="text-center text-xs font-semibold text-stone-500 min-h-[1.5rem] flex items-center justify-center">
+                        Zadejte kód a stiskněte Potvrdit
+                    </div>
+                </div>
+
+                <!-- PRAVÝ BLOK: DOCHÁZKOVÉ AKCE A ŽIVÝ PROTOKOL (7 sloupů) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Panel aktivního pracovníka a volba události -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex justify-between items-center pb-4 mb-4 border-b border-stone-100">
+                            <div>
+                                <span class="text-xs uppercase tracking-wider text-stone-400 font-bold">Přihlášený pracovník</span>
+                                <h3 id="logged-user-name" class="text-lg font-bold text-stone-900">Nepřihlášeno</h3>
+                                <p id="logged-user-role" class="text-xs text-stone-500">Zadejte PIN na levém panelu</p>
+                            </div>
+                            <button id="btn-logout-user" class="hidden bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors border border-stone-300">
+                                Odhlásit
+                            </button>
+                        </div>
+
+                        <!-- 4 hlavní docházková tlačítka -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                            <button id="act-btn-arrival" class="attendance-action-btn disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold flex flex-col items-center gap-1 transition-all shadow-sm">
+                                <span class="text-2xl">🟢</span>
+                                <span class="text-sm">Příchod</span>
+                                <span class="text-[10px] text-emerald-700 font-normal">Zahájení směny</span>
+                            </button>
+
+                            <button id="act-btn-departure" class="attendance-action-btn disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl border-2 border-rose-500 bg-rose-50 hover:bg-rose-100 text-rose-900 font-bold flex flex-col items-center gap-1 transition-all shadow-sm">
+                                <span class="text-2xl">🔴</span>
+                                <span class="text-sm">Odchod</span>
+                                <span class="text-[10px] text-rose-700 font-normal">Konec směny</span>
+                            </button>
+
+                            <button id="act-btn-break" class="attendance-action-btn disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl border-2 border-amber-500 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold flex flex-col items-center gap-1 transition-all shadow-sm">
+                                <span class="text-2xl">☕</span>
+                                <span class="text-sm">Pauza</span>
+                                <span class="text-[10px] text-amber-700 font-normal">Zákonný odpočinek</span>
+                            </button>
+
+                            <button id="act-btn-doctor" class="attendance-action-btn disabled:opacity-50 disabled:cursor-not-allowed p-4 rounded-xl border-2 border-sky-500 bg-sky-50 hover:bg-sky-100 text-sky-900 font-bold flex flex-col items-center gap-1 transition-all shadow-sm">
+                                <span class="text-2xl">🩺</span>
+                                <span class="text-sm">Lékař</span>
+                                <span class="text-[10px] text-sky-700 font-normal">Ošetření / propustka</span>
+                            </button>
+                        </div>
+
+                        <div id="attendance-action-feedback" class="hidden p-3 rounded-lg text-xs font-semibold text-center"></div>
+                    </div>
+
+                    <!-- Denní protokol docházky terminálu -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-base font-bold text-stone-900">Dnešní přehled docházky na středisku</h3>
+                            <button id="btn-refresh-attendance" class="text-xs text-amber-800 hover:text-amber-900 font-semibold underline">Obnovit</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-stone-600">
+                                <thead class="bg-stone-50 text-stone-700 font-semibold border-b border-stone-200 uppercase tracking-wider text-[10px]">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Čas</th>
+                                        <th class="py-2.5 px-3">Jméno pracovníka</th>
+                                        <th class="py-2.5 px-3">Role</th>
+                                        <th class="py-2.5 px-3">Událost</th>
+                                        <th class="py-2.5 px-3">Zdroj</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-records-table-body" class="divide-y divide-stone-100">
+                                    <tr>
+                                        <td colspan="5" class="py-6 text-center text-stone-400 italic">Na tomto terminálu zatím nebyly dnes zaznamenány žádné události.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODUL 2: OBJEDNÁVKOVÝ SYSTÉM 3 DIVIZÍ                          -->
+        <!-- ============================================================= -->
+        <section id="module-orders" class="tab-content space-y-6">
+            
+            <!-- Volba parametrů zakázky (Pobočka, Termín, 3 Ceny) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-3 border-b border-stone-100">
+                    <div>
+                        <h2 class="text-base font-bold text-stone-900">Parametry objednávky a odběru</h2>
+                        <p class="text-xs text-stone-500">Zvolte pobočku pro odběr, termín vyzvednutí a aplikovaný ceník</p>
+                    </div>
+                    <span class="text-xs bg-amber-50 text-amber-900 font-bold px-3 py-1 rounded-full border border-amber-200">
+                        Uzávěrka pekárny na zítřek: 18:00
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+                    <!-- 1. Místo předání -->
+                    <div>
+                        <label for="order-select-branch" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                            Místo vyzvednutí / Pobočka:
+                        </label>
+                        <select id="order-select-branch" class="w-full border border-stone-300 rounded-xl p-3 text-sm bg-stone-50 font-medium focus:ring-2 focus:ring-amber-800 focus:outline-none transition">
+                            <option value="kralupy">Prodejna Kralupy nad Vltavou</option>
+                            <option value="libcice">Prodejna Libčice nad Vltavou</option>
+                            <option value="bistro">Bistro Libčice nad Vltavou</option>
+                            <option value="rozvoz">Rozvoz (pouze velkoobchod &amp; Bistro)</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Datum vyzvednutí -->
+                    <div>
+                        <label for="order-input-date" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                            Datum vyzvednutí:
+                        </label>
+                        <input type="date" id="order-input-date" class="w-full border border-stone-300 rounded-xl p-2.5 text-sm bg-stone-50 font-medium focus:ring-2 focus:ring-amber-800 focus:outline-none transition">
+                    </div>
+
+                    <!-- 3. Třístupňový ceník -->
+                    <div>
+                        <label for="order-select-price-tier" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+                            Cenová hladina:
+                        </label>
+                        <select id="order-select-price-tier" class="w-full border border-stone-300 rounded-xl p-3 text-sm bg-stone-50 font-medium focus:ring-2 focus:ring-amber-800 focus:outline-none transition">
+                            <option value="koncova">Koncová cena (E-shop / Pult s DPH)</option>
+                            <option value="velkoobchod">Velkoobchodní ceník (B2B odběratelé)</option>
+                            <option value="prodejna">Prodejna (Interní zúčtovací cena)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interaktivní box pro empatické varování při kolizi termínu -->
+            <div id="validation-notice-box" class="hidden rounded-2xl p-5 border shadow-sm transition-all duration-300"></div>
+
+            <!-- Hlavička nabídky produktů a filtry divizí -->
+            <div class="flex flex-wrap justify-between items-center gap-3 pt-2">
                 <div>
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>⏱️</span> Evidence docházky
-                    </h3>
-                    <p class="text-xs text-neutral-400 mt-0.5" id="dash-location-label">Zaznamenává se na tomto terminálu.</p>
+                    <h3 class="text-lg font-bold text-stone-900">Výrobní katalog Ludvík &amp; Mistrík</h3>
+                    <p class="text-xs text-stone-500">Položky rozdělené dle příslušnosti k výrobním dílnám</p>
                 </div>
-                <span id="current-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-900 text-neutral-400 border border-neutral-800">
-                    Mimo směnu
-                </span>
+                <!-- Filtrační záložky pro divize -->
+                <div class="flex flex-wrap gap-1.5 bg-stone-200/80 p-1 rounded-xl text-xs font-bold">
+                    <button class="filter-div-btn active px-3 py-1.5 rounded-lg bg-white text-stone-900 shadow-sm" data-divize="vse">Všechny výrobky</button>
+                    <button class="filter-div-btn px-3 py-1.5 rounded-lg text-stone-600 hover:text-stone-900" data-divize="Pekárna">🥖 Pekárna</button>
+                    <button class="filter-div-btn px-3 py-1.5 rounded-lg text-stone-600 hover:text-stone-900" data-divize="Lahůdky">🥪 Lahůdky</button>
+                    <button class="filter-div-btn px-3 py-1.5 rounded-lg text-stone-600 hover:text-stone-900" data-divize="Cukrárna">🎂 Cukrárna</button>
+                </div>
             </div>
 
-            <!-- Tlačítka docházky -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button id="btn-prichod" onclick="zapsatDochazku('prichod')" class="p-4 bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800 text-emerald-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
-                    <span class="text-xl">🟢</span> Příchod
-                </button>
-                <button id="btn-pauza-start" onclick="zapsatDochazku('pauza_start')" class="p-4 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800 text-amber-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
-                    <span class="text-xl">☕</span> Na pauzu
-                </button>
-                <button id="btn-pauza-end" onclick="zapsatDochazku('pauza_end')" class="p-4 bg-blue-950/40 hover:bg-blue-900/60 border border-blue-800 text-blue-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
-                    <span class="text-xl">↩️</span> Z pauzy
-                </button>
-                <button id="btn-odchod" onclick="zapsatDochazku('odchod')" class="p-4 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-300 font-bold rounded-xl text-sm transition flex flex-col items-center gap-1">
-                    <span class="text-xl">🔴</span> Odchod
-                </button>
+            <!-- Dynamický grid pro karty produktů -->
+            <div id="catalog-products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Položky se renderují skriptem js/app.js -->
             </div>
 
-            <!-- Dnešní průchody -->
-            <div class="space-y-2">
-                <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Dnešní průchody</h4>
-                <div class="border border-neutral-800 rounded-xl overflow-hidden">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-neutral-900/60 text-neutral-400 border-b border-neutral-800">
+            <!-- Nákupní košík a sumarizace zakázky -->
+            <div id="order-cart-section" class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 mt-8">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-stone-100">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🛒</span>
+                        <h3 class="text-base font-bold text-stone-900">Položky v objednávce</h3>
+                    </div>
+                    <button id="btn-clear-cart" class="text-xs text-rose-600 hover:text-rose-800 font-semibold underline">Vysypat košík</button>
+                </div>
+
+                <!-- Výpis položek v košíku -->
+                <div id="cart-items-container" class="space-y-3 mb-6">
+                    <div class="text-center py-6 text-stone-400 text-xs italic">V košíku zatím nemáte vybrané žádné zboží.</div>
+                </div>
+
+                <!-- Finální formulář odběratele a odeslání -->
+                <div class="bg-stone-50 rounded-xl p-4 border border-stone-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">Jméno a příjmení zákazníka / firmy:</label>
+                        <input type="text" id="order-customer-name" placeholder="Jan Novák" class="w-full border border-stone-300 rounded-lg p-2 text-sm bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">Telefonní číslo (pro SMS potvrzení):</label>
+                        <input type="tel" id="order-customer-phone" placeholder="+420 777 123 456" class="w-full border border-stone-300 rounded-lg p-2 text-sm bg-white">
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <div class="text-right mb-2">
+                            <span class="text-xs text-stone-500">Celková cena zakázky:</span>
+                            <span id="order-summary-price" class="text-xl font-bold text-amber-950 ml-2">0 Kč</span>
+                        </div>
+                        <button id="btn-submit-order" class="w-full bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+                            Závazně odeslat do výroby
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MODUL 3: SPRÁVA TERMINÁLŮ A BEZPEČNOSTI (ADMIN)                -->
+        <!-- ============================================================= -->
+        <section id="module-admin" class="tab-content space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                <div class="pb-4 mb-6 border-b border-stone-100">
+                    <h2 class="text-lg font-bold text-stone-900">Správa autorizovaných zařízení a terminálů</h2>
+                    <p class="text-xs text-stone-500">Aktivace prodejních tabletů a terminálů v Kralupech, Libčicích a na Bistru</p>
+                </div>
+
+                <!-- Formulář pro vygenerování nového aktivačního tokenu -->
+                <div class="bg-stone-50 rounded-xl p-4 border border-stone-200 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-stone-700 mb-3">Vystavit nový aktivační klíč pro pobočku</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input type="text" id="admin-device-label-input" placeholder="Název (např. Tablet Prodejna Kralupy)" class="border border-stone-300 rounded-lg p-2.5 text-sm bg-white">
+                        <select id="admin-device-location-select" class="border border-stone-300 rounded-lg p-2.5 text-sm bg-white">
+                            <option value="kralupy">Prodejna Kralupy nad Vltavou</option>
+                            <option value="libcice">Prodejna Libčice nad Vltavou</option>
+                            <option value="bistro">Bistro Libčice nad Vltavou</option>
+                        </select>
+                        <button id="admin-btn-generate-key" class="bg-amber-800 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition shadow">
+                            Vygenerovat klíč
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Přehled autorizovaných zařízení -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-stone-600">
+                        <thead class="bg-stone-50 text-stone-700 font-semibold border-b border-stone-200 uppercase tracking-wider text-[10px]">
                             <tr>
-                                <th class="p-3">Čas</th>
-                                <th class="p-3">Událost</th>
-                                <th class="p-3">Terminál / Středisko</th>
+                                <th class="py-3 px-3">Název terminálu</th>
+                                <th class="py-3 px-3">Pobočka</th>
+                                <th class="py-3 px-3">Stav</th>
+                                <th class="py-3 px-3">Aktivační kód / Token</th>
+                                <th class="py-3 px-3">Datum registrace</th>
+                                <th class="py-3 px-3 text-right">Akce</th>
                             </tr>
                         </thead>
-                        <tbody id="dochazka-history-body" class="divide-y divide-neutral-900 text-white">
+                        <tbody id="admin-devices-table-body" class="divide-y divide-stone-100">
+                            <!-- Dynamicky plněno ze skriptu js/auth/device.js -->
                             <tr>
-                                <td colspan="3" class="p-4 text-center text-neutral-500">Zatím žádné záznamy pro dnešní den.</td>
+                                <td class="py-3 px-3 font-semibold text-stone-900">Pultový tablet Libčice</td>
+                                <td class="py-3 px-3">Prodejna Libčice</td>
+                                <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">Aktivní</span></td>
+                                <td class="py-3 px-3 font-mono text-stone-800">LUDVIK-ACT-8842-LIBC</td>
+                                <td class="py-3 px-3 text-stone-400">Před 2 dny</td>
+                                <td class="py-3 px-3 text-right">
+                                    <button class="text-rose-600 hover:text-rose-800 font-semibold hover:underline">Revokovat</button>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </section>
+
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- MODÁLNÍ DIALOGY A POP-UPY                                         -->
+    <!-- ================================================================= -->
+
+    <!-- Modál pro aktivaci terminálu -->
+    <div id="modal-activate-device" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center border border-stone-200">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-2xl mx-auto mb-3">
+                🔐
+            </div>
+            <h3 class="text-base font-bold text-stone-900 mb-1">Autorizace tohoto zařízení</h3>
+            <p class="text-xs text-stone-500 mb-5">Pro zprovoznění terminálu na prodejně zadejte jednorázový bezpečnostní klíč vystavený administrátorem.</p>
+
+            <input type="text" id="input-modal-activation-key" placeholder="LUDVIK-ACT-XXXX-XXXX" class="w-full text-center uppercase tracking-widest font-mono border-2 border-stone-300 rounded-xl p-3 mb-4 text-sm font-bold focus:border-amber-800 focus:outline-none">
+
+            <div class="flex gap-2">
+                <button id="btn-close-activate-modal" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold py-2.5 rounded-xl text-xs transition">
+                    Zrušit
+                </button>
+                <button id="btn-confirm-activate-device" class="flex-1 bg-amber-800 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">
+                    Ověřit a aktivovat
+                </button>
+            </div>
+            <div id="modal-activation-error" class="text-rose-600 text-xs font-semibold mt-3 hidden"></div>
         </div>
     </div>
 
-    <script>
-        // SEZNAM AUTORIZOVANÝCH AKTIVAČNÍCH KÓDŮ ZAŘÍZENÍ OD VEDENÍ
-        const POVOLENE_TERMINALY = {
-            "KRALUPY-TERM-01": { strediskoId: "pekarna-kralupy", nazev: "Terminál Pekárna Kralupy" },
-            "LIBCICE-KNEDLIK-01": { strediskoId: "knedlikarna-libcice", nazev: "Terminál Knedlíkárna Libčice" },
-            "LIBCICE-BISTRO-01": { strediskoId: "bistro-libcice", nazev: "Terminál Bistro Libčice" }
-        };
+    <!-- Patička systému -->
+    <footer class="bg-stone-200 border-t border-stone-300 text-stone-600 text-xs py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-2">
+            <div>
+                <strong>Pekařství Ludvík &amp; Mistrík</strong> © 2026 | Kralupy nad Vltavou &amp; Libčice nad Vltavou
+            </div>
+            <div class="text-stone-500 text-[11px]">
+                Výroba: Pekárna • Lahůdky • Cukrárna
+            </div>
+        </div>
+    </footer>
 
-        // DATABÁZE UŽIVATELŮ: UNIKÁTNÍ PIN A RFID
-        const UZIVATELE = [
-            {
-                email: "vedouci@pekarstvi.cz",
-                heslo: "kralupy123",
-                pin: "987654",
-                rfidUid: "RFID001",
-                jmeno: "Karel Vedoucí",
-                role: "Vedoucí výroby Kralupy"
-            },
-            {
-                email: "vedeni@pekarstvi.cz",
-                heslo: "admin123",
-                pin: "112233",
-                rfidUid: "RFID002",
-                jmeno: "Centrální Vedení",
-                role: "Vedení společnosti"
-            },
-            {
-                email: "pekar@pekarstvi.cz",
-                heslo: "pekar123",
-                pin: "554433",
-                rfidUid: "RFID003",
-                jmeno: "Jan Pekař",
-                role: "Pekař Kralupy"
-            }
-        ];
-
-        let aktivniUzivatel = null;
-        let rfidBuffer = "";
-        let casPosledniKlavesy = 0;
-        let odpocetTimer = null;
-
-        const authPanel = document.getElementById("auth-panel");
-        const dashboard = document.getElementById("app-dashboard");
-        const authError = document.getElementById("auth-error");
-        const pinInput = document.getElementById("input-pin");
-
-        function dnesniKlic() {
-            return new Date().toISOString().slice(0, 10);
-        }
-
-        // KONTROLA AUTORIZACE ZAŘÍZENÍ PŘI NAČTENÍ
-        function ziskatAktivniTerminal() {
-            const token = localStorage.getItem("pekarstvi_authorized_terminal");
-            return token ? JSON.parse(token) : null;
-        }
-
-        function aktualizovatStavZarizeniUI() {
-            const terminal = ziskatAktivniTerminal();
-            const badge = document.getElementById("device-badge");
-            const pinForm = document.getElementById("form-pin");
-            const unauthBox = document.getElementById("device-unauthorized-box");
-
-            if (terminal) {
-                badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full font-medium">✓ ${terminal.nazev}</span>`;
-                pinForm.classList.remove("hidden");
-                unauthBox.classList.add("hidden");
-            } else {
-                badge.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] text-neutral-400 bg-neutral-900 border border-neutral-800 px-2.5 py-0.5 rounded-full font-medium">Neautorizované zařízení</span>`;
-                pinForm.classList.add("hidden");
-                unauthBox.classList.remove("hidden");
-            }
-        }
-
-        function aktivovatZarizeni() {
-            const kod = document.getElementById("input-activation-key").value.trim().toUpperCase();
-            if (POVOLENE_TERMINALY[kod]) {
-                localStorage.setItem("pekarstvi_authorized_terminal", JSON.stringify(POVOLENE_TERMINALY[kod]));
-                authError.classList.add("hidden");
-                aktualizovatStavZarizeniUI();
-            } else {
-                authError.textContent = "Neplatný aktivační kód. Kontaktujte vedení.";
-                authError.classList.remove("hidden");
-            }
-        }
-
-        function zmenitRezim(rezim) {
-            authError.classList.add("hidden");
-            smazatPin();
-            const tabPin = document.getElementById("tab-pin");
-            const tabFull = document.getElementById("tab-full");
-            const formPinWrap = document.getElementById("form-pin");
-            const formFull = document.getElementById("form-full");
-            const unauthBox = document.getElementById("device-unauthorized-box");
-            const isAuthorized = !!ziskatAktivniTerminal();
-
-            if (rezim === "pin") {
-                tabPin.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
-                tabFull.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
-                formFull.classList.add("hidden");
-                if (isAuthorized) {
-                    formPinWrap.classList.remove("hidden");
-                    unauthBox.classList.add("hidden");
-                } else {
-                    formPinWrap.classList.add("hidden");
-                    unauthBox.classList.remove("hidden");
-                }
-            } else {
-                tabFull.className = "flex-1 py-2.5 text-xs font-semibold text-gold border-b-2 border-gold transition";
-                tabPin.className = "flex-1 py-2.5 text-xs font-medium text-neutral-400 hover:text-white transition";
-                formFull.classList.remove("hidden");
-                formPinWrap.classList.add("hidden");
-                unauthBox.classList.add("hidden");
-            }
-        }
-
-        // PŘIHLÁŠENÍ HESLEM (Provede i ranní aktivaci na tomto zařízení)
-        document.getElementById("form-full").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const email = document.getElementById("input-email").value.trim().toLowerCase();
-            const heslo = document.getElementById("input-password").value;
-            const u = UZIVATELE.find(x => x.email === email && x.heslo === heslo);
-
-            if (!u) {
-                authError.textContent = "Chybný email nebo heslo.";
-                authError.classList.remove("hidden");
-                return;
-            }
-
-            localStorage.setItem("session_pw_ok_" + u.email, dnesniKlic());
-            spustitAplikaci(u, "Ověření heslem");
-        });
-
-        // KLÁVESNICE PRO PIN
-        function stiskCisla(c) {
-            if (!ziskatAktivniTerminal()) return;
-            if (pinInput.value.length < 6) {
-                pinInput.value += c;
-                authError.classList.add("hidden");
-                if (pinInput.value.length === 6) overitPin();
-            }
-        }
-
-        function smazatPin() {
-            pinInput.value = "";
-            authError.classList.add("hidden");
-        }
-
-        function overitPin() {
-            if (!ziskatAktivniTerminal()) {
-                authError.textContent = "Na tomto zařízení není povolen PIN terminál.";
-                authError.classList.remove("hidden");
-                return;
-            }
-            const pin = pinInput.value.trim();
-            if (pin.length !== 6) return;
-
-            const u = UZIVATELE.find(x => x.pin === pin);
-            if (!u) {
-                authError.textContent = "Neznámý PIN.";
-                authError.classList.remove("hidden");
-                pinInput.value = "";
-                return;
-            }
-            overitRelaci(u, "PIN Terminál");
-        }
-
-        // RFID OBSLUHA
-        window.addEventListener("keydown", (e) => {
-            if (!ziskatAktivniTerminal()) return; // Ignorovat RFID na neschváleném zařízení
-            const el = document.activeElement;
-            if (el && (el.id === "input-email" || el.id === "input-password" || el.id === "input-activation-key")) return;
-
-            const ted = Date.now();
-            if (ted - casPosledniKlavesy > 100) rfidBuffer = "";
-            casPosledniKlavesy = ted;
-
-            if (e.key === "Enter") {
-                if (rfidBuffer.length >= 4) {
-                    e.preventDefault();
-                    const u = UZIVATELE.find(x => x.rfidUid === rfidBuffer);
-                    if (u) {
-                        overitRelaci(u, "RFID Terminál");
-                    } else {
-                        authError.textContent = `Neznámý RFID čip (${rfidBuffer}).`;
-                        authError.classList.remove("hidden");
-                    }
-                    rfidBuffer = "";
-                }
-            } else if (e.key.length === 1) {
-                rfidBuffer += e.key;
-            }
-        });
-
-        function overitRelaci(u, typ) {
-            const datum = localStorage.getItem("session_pw_ok_" + u.email);
-            if (datum !== dnesniKlic()) {
-                authError.textContent = `${u.jmeno} se dnes ještě nepřihlásil heslem. Přihlaste se prosím nejdříve záložkou Správa.`;
-                authError.classList.remove("hidden");
-                pinInput.value = "";
-                return;
-            }
-            spustitAplikaci(u, typ);
-        }
-
-        function spustitAplikaci(u, typ) {
-            aktivniUzivatel = u;
-            const terminal = ziskatAktivniTerminal();
-            authError.classList.add("hidden");
-            authPanel.classList.add("hidden");
-            dashboard.classList.remove("hidden");
-
-            document.getElementById("dash-user-name").textContent = u.jmeno;
-            document.getElementById("dash-user-role").textContent = `${u.role} (${u.email})`;
-            document.getElementById("dash-auth-badge").textContent = typ;
-            document.getElementById("dash-location-label").textContent = terminal ? `Terminál: ${terminal.nazev}` : "Centrální správa";
-
-            aktualizovatDochazkuUI();
-            spustitOdpocetZamknuti(30);
-        }
-
-        // EVIDENCE DOCHÁZKY
-        function nacistDochazku() {
-            const data = localStorage.getItem("dochazka_" + dnesniKlic());
-            return data ? JSON.parse(data) : [];
-        }
-
-        function ulozitDochazku(zaznamy) {
-            localStorage.setItem("dochazka_" + dnesniKlic(), JSON.stringify(zaznamy));
-        }
-
-        function ziskatStavUzivatele() {
-            const zaznamy = nacistDochazku().filter(z => z.email === aktivniUzivatel.email);
-            if (zaznamy.length === 0) return { stav: "mimo", posledni: null, zaznamy: [] };
-            const posledni = zaznamy[zaznamy.length - 1];
-            return {
-                stav: posledni.typ === "prichod" || posledni.typ === "pauza_end" ? "pracuje" : (posledni.typ === "pauza_start" ? "pauza" : "mimo"),
-                posledni: posledni,
-                zaznamy: zaznamy
-            };
-        }
-
-        function zapsatDochazku(typ) {
-            const ted = new Date();
-            const casStr = ted.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-            const terminal = ziskatAktivniTerminal();
-            const lokalita = terminal ? terminal.nazev : "Vzdálený přístup";
-
-            const novyZaznam = {
-                email: aktivniUzivatel.email,
-                jmeno: aktivniUzivatel.jmeno,
-                typ: typ,
-                cas: casStr,
-                timestamp: ted.getTime(),
-                lokalita: lokalita
-            };
-
-            const zaznamy = nacistDochazku();
-            zaznamy.push(novyZaznam);
-            ulozitDochazku(zaznamy);
-
-            aktualizovatDochazkuUI();
-            spustitOdpocetZamknuti(5); // Kiosk rychlé uzamčení za 5s
-        }
-
-        function aktualizovatDochazkuUI() {
-            const info = ziskatStavUzivatele();
-            const badge = document.getElementById("current-status-badge");
-            const btnPrichod = document.getElementById("btn-prichod");
-            const btnPauzaStart = document.getElementById("btn-pauza-start");
-            const btnPauzaEnd = document.getElementById("btn-pauza-end");
-            const btnOdchod = document.getElementById("btn-odchod");
-
-            if (info.stav === "pracuje") {
-                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800";
-                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Na směně`;
-                btnPrichod.disabled = true; btnPrichod.classList.add("opacity-30", "cursor-not-allowed");
-                btnPauzaStart.disabled = false; btnPauzaStart.classList.remove("opacity-30", "cursor-not-allowed");
-                btnPauzaEnd.disabled = true; btnPauzaEnd.classList.add("opacity-30", "cursor-not-allowed");
-                btnOdchod.disabled = false; btnOdchod.classList.remove("opacity-30", "cursor-not-allowed");
-            } else if (info.stav === "pauza") {
-                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800";
-                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Na pauze`;
-                btnPrichod.disabled = true; btnPrichod.classList.add("opacity-30", "cursor-not-allowed");
-                btnPauzaStart.disabled = true; btnPauzaStart.classList.add("opacity-30", "cursor-not-allowed");
-                btnPauzaEnd.disabled = false; btnPauzaEnd.classList.remove("opacity-30", "cursor-not-allowed");
-                btnOdchod.disabled = true; btnOdchod.classList.add("opacity-30", "cursor-not-allowed");
-            } else {
-                badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-neutral-900 text-neutral-400 border border-neutral-800";
-                badge.innerHTML = `Mimo směnu`;
-                btnPrichod.disabled = false; btnPrichod.classList.remove("opacity-30", "cursor-not-allowed");
-                btnPauzaStart.disabled = true; btnPauzaStart.classList.add("opacity-30", "cursor-not-allowed");
-                btnPauzaEnd.disabled = true; btnPauzaEnd.classList.add("opacity-30", "cursor-not-allowed");
-                btnOdchod.disabled = true; btnOdchod.classList.add("opacity-30", "cursor-not-allowed");
-            }
-
-            const tbody = document.getElementById("dochazka-history-body");
-            tbody.innerHTML = "";
-            if (info.zaznamy.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-neutral-500">Zatím žádné záznamy pro dnešní den.</td></tr>`;
-            } else {
-                const mapNazvy = { prichod: "🟢 Příchod", pauza_start: "☕ Pauza", pauza_end: "↩️ Z pauzy", odchod: "🔴 Odchod" };
-                info.zaznamy.slice().reverse().forEach(z => {
-                    const row = document.createElement("tr");
-                    row.className = "hover:bg-neutral-900/40";
-                    row.innerHTML = `
-                        <td class="p-3 font-mono text-neutral-300">${z.cas}</td>
-                        <td class="p-3 font-medium">${mapNazvy[z.typ] || z.typ}</td>
-                        <td class="p-3 text-neutral-400 text-[11px]">${z.lokalita}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-        }
-
-        function spustitOdpocetZamknuti(sekundy) {
-            if (odpocetTimer) clearInterval(odpocetTimer);
-            const box = document.getElementById("auto-lock-counter");
-            const label = document.getElementById("lock-sec");
-            box.classList.remove("hidden");
-            let zbyva = sekundy;
-            label.textContent = zbyva;
-
-            odpocetTimer = setInterval(() => {
-                zbyva--;
-                label.textContent = zbyva;
-                if (zbyva <= 0) {
-                    clearInterval(odpocetTimer);
-                    odhlasit();
-                }
-            }, 1000);
-        }
-
-        function odhlasit() {
-            if (odpocetTimer) clearInterval(odpocetTimer);
-            document.getElementById("auto-lock-counter").classList.add("hidden");
-            dashboard.classList.add("hidden");
-            authPanel.classList.remove("hidden");
-            aktivniUzivatel = null;
-            smazatPin();
-            document.getElementById("input-password").value = "";
-            aktualizovatStavZarizeniUI();
-        }
-
-        // Inicializace při spuštění
-        aktualizovatStavZarizeniUI();
-    </script>
+    <!-- Načtení hlavního řídicího modulu aplikace -->
+    <script type="module" src="js/app.js"></script>
 </body>
-<script src="objednavky.js"></script>
 </html>
